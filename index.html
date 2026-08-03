@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社 | 官网</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        :root {
+            --bg: #0f1014;
+            --text: #f0f0f0;
+            --muted: #a0a0a8;
+            --accent: #6388ff;
+            --card-bg: rgba(255,255,255,0.06);
+        }
+        [data-theme="light"] {
+            --bg: #f7f8fa;
+            --text: #181820;
+            --muted: #555560;
+            --card-bg: rgba(0,0,0,0.05);
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem 1.2rem;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        /* 导航栏 */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 8rem;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .nav-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.6rem;
+        }
+        .nav-group a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 1.05rem;
+            transition: color 0.2s;
+        }
+        .nav-group a:hover {
+            color: var(--accent);
+        }
+        /* 主页主体区域 */
+        .hero {
+            margin-top: 2rem;
+        }
+        .hero h1 {
+            font-size: clamp(2.4rem,10vw,3.4rem);
+            line-height: 1.2;
+            margin-bottom: 1.4rem;
+        }
+        .hero p {
+            color: var(--muted);
+            font-size: 1.15rem;
+            line-height: 1.8;
+            max-width: 640px;
+        }
+        .btn-area {
+            margin-top: 2.6rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+        }
+        button {
+            font-size: 1.05rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.25s ease;
+        }
+        button:hover {
+            opacity: 0.82;
+        }
+        .btn-main {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-ghost {
+            background: var(--card-bg);
+            color: var(--text);
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <nav>
+        <div class="logo">S侦探社</div>
+        <div class="nav-group">
+            <a href="#">首页</a>
+            <a href="forum.html">论坛</a>
+            <a href="login.html">登录</a>
+            <button id="themeBtn">切换明暗</button>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <h1>S侦探社官方站点</h1>
+        <p>交流、探讨、分享，在这里开启推理与创作。论坛系统持续开发中，欢迎你的加入。</p>
+        <div class="btn-area">
+            <button class="btn-main" onclick="location.href='login.html'">前往登录</button>
+            <button class="btn-ghost" onclick="location.href='forum.html'">浏览论坛</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const btn = document.getElementById('themeBtn');
+btn.onclick = () => {
+    document.documentElement.toggleAttribute('data-theme');
+}
+</script>
+</body>
+</html>
