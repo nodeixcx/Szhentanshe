@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>侦探社 | 官网</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Inter, system-ui, sans-serif;
+        }
+        :root {
+            --bg: #0f1014;
+            --card: rgba(255,255,255,0.06);
+            --text: #f0f0f0;
+            --muted: #a0a0a8;
+            --accent: #6388ff;
+        }
+        [data-theme="light"] {
+            --bg: #f7f8fa;
+            --card: rgba(255,255,255,0.7);
+            --text: #181820;
+            --muted: #555560;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+            transition: 0.3s background;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1100px;
+            margin: 0 auto 4rem;
+        }
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-left: 2rem;
+            transition: 0.2s;
+        }
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+        .container {
+            最大宽度: 1100PX;
+            边缘: 0 自动;
+        }
+        .英雄 {
+            margin-top: 6REM;
+        }
+        H1 {
+            字体大小: 2.8REM;
+            margin-bottom: 1REM;
+        }
+        p {
+            颜色: var(--已静音);
+            最大宽度: 600PX;
+            线高: 1.7;
+        }
+        .btn-群 {
+            margin-top: 2REM;
+        }
+        button {
+            padding: 0.8rem 1.6rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: .2s;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            margin-right: 1rem;
+        }
+        .btn-ghost {
+            background: var(--card);
+            color: var(--text);
+        }
+    </style>
+</head>
+<body>
+    <div 班级="容器">
+        <NAV>
+            <div 班级="徽标">侦探社</div>
+            <div 班级="导航链接">
+                <一个 href="#">首页</一个>
+                <一个 href="forum.html">论坛</一个>
+                <一个 href="login.html">登录</一个>
+                <按钮 身份标识="主题Btn">切换明暗</按钮>
+            </div>
+        </NAV>
+
+        <部分 班级="英雄">
+            <H1>侦探社官方站点</H1>
+            <p>交流、探讨、分享，在这里开启推理与创作。 论坛系统持续开发中，欢迎加入。</p>
+            <div 班级="btn组">
+                <按钮 班级="btn-primary" onClick="位置location.href='login.html'"href='login.html'">前往登录</按钮>
+                <按钮 班级="btn-ghost" onClick="位置.href='forum.html'">浏览论坛</按钮>
+            </div>
+        </部分>
+    </div>
+
+    <脚本>
+// 明暗切换
+ConstBTN=文件.getElementById('themeBtn')；
+BTN.onClick=()=>{
+文件.documentElement.toggleAttribute('数据主题')；
+        }
+    </脚本>
+</身体>
+</超文本标记语言>
