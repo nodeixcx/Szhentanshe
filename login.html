@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 | S侦探社</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.08);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc;
+            --text-main: #11141c;
+            --text-sub: #595d6b;
+            --accent: #507ee8;
+            --accent-fade: rgba(80, 126, 232, 0.1);
+            --border-fade: rgba(0, 0, 0, 0.07);
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1.6rem;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 1160px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem 2rem;
+            margin-bottom: 8rem;
+        }
+        .logo {
+            font-size: 1.45rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        .nav-wrapper {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        .nav-wrapper a {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 1rem;
+            position: relative;
+            transition: var(--transition);
+        }
+        .nav-wrapper a::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+        .nav-wrapper a:hover {
+            color: var(--accent);
+        }
+        .nav-wrapper a:hover::after {
+            width: 100%;
+        }
+        #themeBtn {
+            background: transparent;
+            border: 1px solid var(--border-fade);
+            color: var(--text-main);
+            padding: 0.6rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        #themeBtn:hover {
+            border-color: var(--accent);
+            background: var(--accent-fade);
+        }
+        .login-wrap {
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        .login-wrap h2 {
+            font-size: 2rem;
+            font-weight: 400;
+            margin-bottom: 2rem;
+        }
+        .form-item {
+            margin-bottom: 1.4rem;
+        }
+        .form-item label {
+            display: block;
+            color: var(--text-sub);
+            margin-bottom: 0.6rem;
+        }
+        .form-item input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border-fade);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        .form-item input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .submit-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+        footer {
+            max-width: 1160px;
+            margin: 6rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-fade);
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav>
+        <div class="logo">S侦探社</div>
+        <div class="nav-wrapper">
+            <a href="index.html">首页</a>
+            <a href="forum.html">论坛</a>
+            <a href="login.html">登录</a>
+            <button id="themeBtn">切换明暗</button>
+        </div>
+    </nav>
+
+    <div class="login-wrap">
+        <h2>账号登录</h2>
+        <div class="form-item">
+            <label>用户名</label>
+            <input type="text" placeholder="输入账号">
+        </div>
+        <div class="form-item">
+            <label>密码</label>
+            <input type="password" placeholder="输入密码">
+        </div>
+        <button class="submit-btn">登录</button>
+    </div>
+</div>
+
+<footer>
+    © 2026 S侦探社 | 推理创作社群
+</footer>
+
+<script>
+(function(){
+    const html = document.documentElement;
+    const btn = document.getElementById('themeBtn');
+    const savedTheme = localStorage.getItem('site-theme');
+    if(savedTheme === 'light'){
+        html.classList.add('light');
+    }
+    btn.onclick = function(){
+        if(html.classList.contains('light')){
+            html.classList.remove('light');
+            localStorage.setItem('site-theme','dark');
+        }else{
+            html.classList.add('light');
+            localStorage.setItem('site-theme','light');
+        }
+    }
+})();
+</script>
+</body>
+</html>
