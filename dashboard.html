@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页｜S侦探社</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui, -apple-system, sans-serif; }
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115,152,255,0.12);
+            --border-fade: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc;
+            --text-main: #11141c;
+            --text-sub: #595d6b;
+            --accent: #507ee8;
+            --accent-fade: rgba(80,126,232,0.1);
+            --border-fade: rgba(0,0,0,0.1);
+            --card-bg: #ffffff;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1.6rem;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+        .container { max-width:1160px; margin:0 auto; width:100%; flex:1; }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem 2rem;
+            margin-bottom: 4rem;
+        }
+        .logo { font-size:1.45rem; font-weight:500; letter-spacing:1px; }
+        .nav-wrapper {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        .nav-wrapper a {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size:1rem;
+            position:relative;
+            transition:var(--transition);
+        }
+        .nav-wrapper a::after {
+            content:"";
+            position:absolute;
+            left:0;
+            bottom:-4px;
+            width:0;
+            height:1px;
+            background:var(--accent);
+            transition:var(--transition);
+        }
+        .nav-wrapper a:hover, .nav-wrapper a.active {
+            color:var(--accent);
+        }
+        .nav-wrapper a:hover::after, .nav-wrapper a.active::after {
+            width:100%;
+        }
+        .search-input {
+            padding:0.5rem 1rem;
+            background:transparent;
+            border:1px solid var(--border-fade);
+            color:var(--text-main);
+            border-radius:6px;
+        }
+        #themeBtn {
+            background:transparent;
+            border:1px solid var(--border-fade);
+            color:var(--text-main);
+            padding:0.6rem 1.1rem;
+            border-radius:8px;
+            font-size:0.95rem;
+            cursor:pointer;
+            transition:var(--transition);
+        }
+        #themeBtn:hover { border-color:var(--accent); background:var(--accent-fade); }
+        #logoutBtn {
+            background-color:var(--accent);
+            color:#fff;
+            border:none;
+            padding:0.6rem 1.1rem;
+            border-radius:8px;
+            cursor:pointer;
+        }
+        .carousel-wrap {
+            position:relative;
+            border:1px solid var(--border-fade);
+            border-radius:12px;
+            padding:4rem 2rem;
+            text-align:center;
+            margin-bottom:3rem;
+            background:var(--card-bg);
+        }
+        .carousel-wrap h2 { font-size:2.2rem; font-weight:400; }
+        .arrow {
+            position:absolute;
+            top:50%;
+            transform:translateY(-50%);
+            width:44px;
+            height:44px;
+            border-radius:50%;
+            border:1px solid var(--border-fade);
+            background:transparent;
+            color:var(--text-main);
+            font-size:1.4rem;
+            cursor:pointer;
+            transition:var(--transition);
+        }
+        .arrow:hover { background:var(--accent-fade); border-color:var(--accent); }
+        .arrow-left { left:16px; }
+        .arrow-right { right:16px; }
+        .work-list {
+            display:grid;
+            gap:1.2rem;
+        }
+        .work-card {
+            display:grid;
+            grid-template-columns:160px 1fr 120px;
+            align-items:center;
+            gap:1.5rem;
+            background:var(--card-bg);
+            border:1px solid var(--border-fade);
+            border-radius:10px;
+            padding:1.4rem;
+            transition:var(--transition);
+        }
+        .work-card:hover { border-color:var(--accent); background:var(--accent-fade); }
+        .work-title { font-size:1.2rem; }
+        .work-desc { color:var(--text-sub); }
+        .work-tag {
+            text-align:center;
+            padding:0.4rem;
+            border:1px solid var(--border-fade);
+            border-radius:6px;
+            font-size:0.9rem;
+            color:var(--text-sub);
+        }
+        .empty-hint { text-align:center; color:var(--text-sub); padding:3rem 0; }
+        footer {
+            max-width:1160px;
+            margin:6rem auto 0;
+            padding-top:2rem;
+            border-top:1px solid var(--border-fade);
+            color:var(--text-sub);
+            font-size:0.9rem;
+        }
+        @media(max-width:720px){
+            .work-card { grid-template-columns:1fr; gap:0.6rem; }
+        }
+        .toast {
+            position:fixed;
+            bottom:2rem;
+            left:50%;
+            transform:translateX(-50%);
+            background:var(--accent);
+            color:#fff;
+            padding:0.8rem 1.6rem;
+            border-radius:8px;
+            font-size:0.95rem;
+            box-shadow:0 8px 24px rgba(0,0,0,0.3);
+            z-index:999;
+            opacity:0;
+            transition:opacity 0.3s;
+            pointer-events:none;
+        }
+        .toast.show { opacity:1; pointer-events:auto; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav>
+        <div class="logo">S侦探社</div>
+        <div class="nav-wrapper">
+            <a href="dashboard.html" class="active">首页</a>
+            <a href="forum.html">论坛</a>
+            <a href="#">个人中心</a>
+            <input class="search-input" placeholder="搜索作品/帖子">
+            <button id="themeBtn">切换明暗</button>
+            <button id="logoutBtn">退出登录</button>
+        </div>
+    </nav>
+    <div class="carousel-wrap">
+        <button class="arrow arrow-left">&lt;</button>
+        <h2>展示作品</h2>
+        <button class="arrow arrow-right">&gt;</button>
+    </div>
+    <div class="work-list" id="workListBox">
+        <div class="empty-hint">加载中...</div>
+    </div>
+</div>
+<footer>© 2026 S侦探社｜推理创作社群</footer>
+<div id="toast" class="toast"></div>
+
+<script>
+    // ---- 主题切换 ----
+    (function(){
+        const html = document.documentElement;
+        const btn = document.getElementById('themeBtn');
+        const saved = localStorage.getItem('site-theme');
+        if(saved === 'light') html.classList.add('light');
+        btn.onclick = function(){
+            if(html.classList.contains('light')){
+                html.classList.remove('light');
+                localStorage.setItem('site-theme','dark');
+            }else{
+                html.classList.add('light');
+                localStorage.setItem('site-theme','light');
+            }
+        }
+    })();
+
+    // ---- Toast 提示 ----
+    function showToast(msg, isError = false) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = isError ? '#f87171' : 'var(--accent)';
+        t.classList.add('show');
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ---- 加载 Supabase SDK（动态双源） ----
+    let supabase = null;
+    let sdkReady = false;
+    const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+
+    function initSupabase() {
+        try {
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                const { createClient } = window.supabase;
+                supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                sdkReady = true;
+                console.log('✅ Supabase SDK 就绪');
+                // SDK 就绪后，执行登录检查 & 加载作品
+                checkAuthAndLoad();
+            } else {
+                console.warn('❌ Supabase SDK 未加载');
+                sdkReady = false;
+                document.getElementById('workListBox').innerHTML = 
+                    '<div class="empty-hint">⚠️ SDK加载失败，请刷新页面或检查网络</div>';
+            }
+        } catch (err) {
+            console.error('initSupabase error:', err);
+            sdkReady = false;
+        }
+    }
+
+    function loadCDN(src, fallback) {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = function() {
+            console.log('📦 加载成功:', src);
+            initSupabase();
+            if (!sdkReady && fallback) {
+                console.warn('🔄 尝试备用源');
+                const s2 = document.createElement('script');
+                s2.src = fallback;
+                s2.onload = function() { initSupabase(); };
+                s2.onerror = function() { 
+                    document.getElementById('workListBox').innerHTML = 
+                        '<div class="empty-hint">❌ 所有CDN加载失败，请检查网络</div>';
+                };
+                document.head.appendChild(s2);
+            }
+        };
+        s.onerror = function() {
+            console.warn('❌ 加载失败:', src);
+            if (fallback) {
+                const s2 = document.createElement('script');
+                s2.src = fallback;
+                s2.onload = function() { initSupabase(); };
+                s2.onerror = function() { 
+                    document.getElementById('workListBox').innerHTML = 
+                        '<div class="empty-hint">❌ 所有CDN加载失败，请检查网络</div>';
+                };
+                document.head.appendChild(s2);
+            }
+        };
+        document.head.appendChild(s);
+    }
+
+    // 启动加载
+    loadCDN(
+        'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js',
+        'https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js'
+    );
+
+    // ---- 核心功能：检查登录 & 加载作品 ----
+    async function checkAuthAndLoad() {
+        if (!sdkReady) {
+            // 等 SDK 就绪再执行
+            setTimeout(checkAuthAndLoad, 500);
+            return;
+        }
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showToast('未登录，跳转登录页', true);
+                setTimeout(() => location.replace('login.html'), 800);
+                return;
+            }
+            // 已登录，加载作品
+            await loadWorks();
+        } catch (err) {
+            console.error('checkAuth error:', err);
+            showToast('登录检查失败，请刷新', true);
+        }
+
+        // 退出按钮
+        document.getElementById('logoutBtn').onclick = async function() {
+            await supabase.auth.signOut();
+            showToast('已退出');
+            setTimeout(() => location.replace('login.html'), 500);
+        };
+    }
+
+    async function loadWorks() {
+        const box = document.getElementById('workListBox');
+        try {
+            const { data, error } = await supabase.from('works').select('*').order('created_at', { ascending: false });
+            if (error) {
+                box.innerHTML = `<div class="empty-hint">读取失败：${escapeHtml(error.message)}</div>`;
+                return;
+            }
+            if (!data || data.length === 0) {
+                box.innerHTML = `<div class="empty-hint">暂无官方发布作品</div>`;
+                return;
+            }
+            box.innerHTML = '';
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'work-card';
+                card.innerHTML = `
+                    <div class="work-title">${escapeHtml(item.title)}</div>
+                    <div class="work-desc">${escapeHtml(item.content || '暂无简介')}</div>
+                    <div class="work-tag">图文</div>
+                `;
+                box.appendChild(card);
+            });
+        } catch (err) {
+            box.innerHTML = `<div class="empty-hint">加载异常：${escapeHtml(err.message)}</div>`;
+        }
+    }
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // 兜底：若页面加载后5秒还未执行，手动触发一次
+    setTimeout(() => {
+        if (!sdkReady) {
+            console.warn('⚠️ 5秒后 SDK 仍未就绪，重新尝试');
+            initSupabase();
+        }
+    }, 5000);
+</script>
+</body>
+</html>
