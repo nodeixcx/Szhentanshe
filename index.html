@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社 | 欢迎</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.08);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc;
+            --text-main: #11141c;
+            --text-sub: #595d6b;
+            --accent: #507ee8;
+            --accent-fade: rgba(80, 126, 232, 0.1);
+            --border-fade: rgba(0, 0, 0, 0.1);
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1.6rem;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 1160px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem 2rem;
+            margin-bottom: 8rem;
+        }
+        .logo {
+            font-size: 1.45rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        .nav-wrapper {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        #themeBtn {
+            background: transparent;
+            border: 1px solid var(--border-fade);
+            color: var(--text-main);
+            padding: 0.6rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        #themeBtn:hover {
+            border-color: var(--accent);
+            background: var(--accent-fade);
+        }
+        .hero {
+            max-width: 680px;
+        }
+        .hero h1 {
+            font-size: clamp(2.6rem, 9vw, 3.6rem);
+            font-weight: 400;
+            line-height: 1.15;
+            margin-bottom: 1.6rem;
+            letter-spacing: 2px;
+            opacity: 0.94;
+        }
+        .hero p {
+            color: var(--text-sub);
+            font-size: 1.12rem;
+            line-height: 1.8;
+            margin-bottom: 2.8rem;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.3rem;
+        }
+        .btn-solid {
+            padding: 1rem 2.2rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-solid:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+        footer {
+            max-width: 1160px;
+            margin: 8rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-fade);
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav>
+        <div class="logo">S侦探社</div>
+        <div class="nav-wrapper">
+            <button class="btn-solid" onclick="location.replace('login.html')">前往登录</button>
+            <button id="themeBtn">切换明暗</button>
+        </div>
+    </nav>
+    <section class="hero">
+        <h1>S侦探社官方站点</h1>
+        <p>交流、探讨、分享，在这里开启推理与创作。
+        <br>登录后查看社团原创作品、进入推理论坛。</p>
+        <div class="button-group">
+            <button class="btn-solid" onclick="location.replace('login.html')">前往登录</button>
+        </div>
+    </section>
+</div>
+<footer>
+    © 2026 S侦探社 | 推理创作社群
+</footer>
+<script>
+(function(){
+    const html = document.documentElement;
+    const btn = document.getElementById('themeBtn');
+    const savedTheme = localStorage.getItem('site-theme');
+    if(savedTheme === 'light'){
+        html.classList.add('light');
+    }
+    btn.onclick = function(){
+        if(html.classList.contains('light')){
+            html.classList.remove('light');
+            localStorage.setItem('site-theme','dark');
+        }else{
+            html.classList.add('light');
+            localStorage.setItem('site-theme','light');
+        }
+    }
+})();
+</script>
+</body>
+</html>
