@@ -75,8 +75,8 @@ toggleBtn.onclick = function(){
 applyTheme(); //页面立刻加载保存的主题
 
 // ========== Supabase初始化，填入你的项目URL和anon密钥 ==========
-const SUPABASE_URL = "填入你的supabase url";
-const SUPABASE_ANON_KEY = "填入你的anon public密钥";
+const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 //登录校验，未登录踢回登录页
