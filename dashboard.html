@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S侦探社｜内部主页</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --bg-primary: #0b0c10;
+    --text-main: #f2f3f7;
+    --text-sub: #989ca8;
+    --accent: #7398ff;
+    --accent-fade: rgba(115, 152, 255, 0.12);
+    --border-fade: rgba(255, 255, 255, 0.08);
+    --transition: all 0.28s ease;
+}
+html.light {
+    --bg-primary: #f7f8fc;
+    --text-main: #11141c;
+    --text-sub: #595d6b;
+    --accent: #507ee8;
+    --accent-fade: rgba(80, 126, 232, 0.1);
+    --border-fade: rgba(0, 0, 0, 0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, -apple-system, sans-serif}
+body{background:var(--bg-primary);color:var(--text-main);min-height:100vh;transition: var(--transition)}
+nav{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1.2rem 5%;border-bottom:1px solid var(--border-fade)}
+.brand{font-size:1.4rem;font-weight:bold}
+.nav-spacer{flex:1}
+nav button, nav a{background:transparent;color:var(--text-main);border:1px solid var(--border-fade);padding:0.5rem 1rem;border-radius:8px;text-decoration:none}
+nav button:hover, nav a:hover{border-color:var(--accent);background:var(--accent-fade)}
+main{max-width:1000px;margin:3rem auto;padding:0 5%}
+h2{margin-bottom:1.2rem}
+.works-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem}
+.work-card{background:var(--bg-primary);border:1px solid var(--border-fade);border-radius:12px;padding:1.2rem}
+.work-card h3{margin-bottom:0.6rem}
+.empty-tip{opacity:0.6;text-align:center;padding:3rem 0}
+</style>
+</head>
+<body>
+<nav>
+    <div class="brand">S侦探社</div>
+    <div class="nav-spacer"></div>
+    <button id="themeToggle">切换明暗</button>
+    <a href="forum.html">论坛</a>
+    <button id="logoutBtn">退出登录</button>
+</nav>
+
+<main>
+    <h2>官方发布作品</h2>
+    <div id="worksWrap" class="works-container">
+        <div class="empty-tip">加载中……</div>
+    </div>
+</main>
+
+<script>
+// =========【优先执行明暗，不受supabase错误影响】=========
+const htmlRoot = document.documentElement;
+const themeBtn = document.getElementById('themeToggle');
+const savedTheme = localStorage.getItem('site-theme');
+if(savedTheme === 'light'){
+    htmlRoot.classList.add('light');
+}
+themeBtn.addEventListener('click',function(){
+    if(htmlRoot.classList.contains('light')){
+        htmlRoot.classList.remove('light');
+        localStorage.setItem('site-theme','dark');
+    }else{
+        htmlRoot.classList.add('light');
+        localStorage.setItem('site-theme','light');
+    }
+});
+
+// ========== 填入你的Supabase信息 ==========
+const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+// =========================================
+let supabase = null;
+try{
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}catch(err){
+    document.getElementById('worksWrap').innerHTML = `<div class="empty-tip">Supabase初始化失败，请检查URL/密钥</div>`;
+}
+
+// 退出登录按钮绑定，就算数据库挂掉，按钮也有反馈
+document.getElementById('logoutBtn').addEventListener('click',async function(){
+    if(!supabase){
+        alert("数据库连接异常，直接返回首页");
+        location.href="index.html";
+        return;
+    }
+    await supabase.auth.signOut();
+    location.href = "index.html";
+});
+
+async function checkAuth(){
+    if(!supabase) return;
+    const {data:{user}} = await supabase.auth.getUser();
+    if(!user){
+        location.href = "login.html";
+    }
+}
+
+async function loadWorks(){
+    if(!supabase) return;
+    const wrap = document.getElementById('worksWrap');
+    const {data,error} = await supabase.from('works').select('*').order('created_at',{ascending:false});
+    if(error){
+        wrap.innerHTML = `<div class="empty-tip">读取作品失败：${error.message}</div>`;
+        return;
+    }
+    if(!data || data.length === 0){
+        wrap.innerHTML = `<div class="empty-tip">暂无官方发布作品</div>`;
+        return;
+    }
+    let tpl = '';
+    data.forEach(item=>{
+        tpl +=`
+        <div class="work-card">
+            <h3>${item.title}</h3>
+            <p>${item.content??''}</p>
+            <div style="margin-top:0.8rem;opacity:0.6;font-size:0.85rem">标签：${item.tag}</div>
+        </div>
+        `
+    })
+    wrap.innerHTML = tpl;
+}
+
+(async ()=>{
+    if(supabase){
+        await checkAuth();
+        await loadWorks();
+    }
+})();
+</script>
+</body>
+</html>
