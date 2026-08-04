@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh‑CN">
+<head>
+<meta charset="UTF‑8">
+<meta name="viewport" content="width=device‑width, initial‑scale=1.0">
+<title>S侦探社｜内部主页</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --bg:#0f1117;
+    --text:#e6e6e6;
+    --card:#1a1d27;
+    --border:#2c303a;
+    --accent:#6385ff;
+}
+[data-theme="light"] {
+    --bg:#f7f8fa;
+    --text:#1c1c1c;
+    --card:#ffffff;
+    --border:#d8dbe3;
+    --accent:#3b63e8;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:var(--bg);color:var(--text);min-height:100vh;transition: 0.35s}
+nav{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1.2rem 5%;border-bottom:1px solid var(--border)}
+.brand{font-size:1.4rem;font-weight:bold}
+.nav-spacer{flex:1}
+nav button, nav a{background:transparent;color:var(--text);border:1px solid var(--border);padding:0.5rem 1rem;border-radius:8px;text-decoration:none}
+nav button:hover, nav a:hover{border-color:var(--accent)}
+main{max-width:1000px;margin:3rem auto;padding:0 5%}
+h2{margin-bottom:1.2rem}
+.works-container{display:grid;grid-template-columns:repeat(auto‑fill,minmax(280px,1fr));gap:1.2rem}
+.work-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem}
+.work-card h3{margin-bottom:0.6rem}
+.empty-tip{opacity:0.6;text-align:center;padding:3rem 0}
+</style>
+</head>
+<body>
+<nav>
+    <div class="brand">S侦探社</div>
+    <div class="nav‑spacer"></div>
+    <button id="themeToggle">切换明暗</button>
+    <a href="forum.html">论坛</a>
+    <button id="logoutBtn">退出登录</button>
+</nav>
+
+<main>
+    <h2>官方发布作品</h2>
+    <div id="worksWrap" class="works-container">
+        <div class="empty‑tip">加载中……</div>
+    </div>
+</main>
+
+<script>
+// ========== 主题切换【修复重点】 ==========
+const toggleBtn = document.getElementById('themeToggle');
+function applyTheme(){
+    const saved = localStorage.getItem('siteTheme');
+    if(saved && saved !== 'dark'){
+        document.documentElement.setAttribute('data‑theme', saved);
+    }else{
+        document.documentElement.removeAttribute('data‑theme');
+    }
+}
+toggleBtn.onclick = function(){
+    const current = document.documentElement.getAttribute('data‑theme');
+    const next = current === 'light' ? '' : 'light';
+    if(next){
+        document.documentElement.setAttribute('data‑theme', next);
+    }else{
+        document.documentElement.removeAttribute('data‑theme');
+    }
+    localStorage.setItem('siteTheme', next || 'dark');
+}
+applyTheme(); //页面立刻加载保存的主题
+
+// ========== Supabase初始化，填入你的项目URL和anon密钥 ==========
+const SUPABASE_URL = "填入你的supabase url";
+const SUPABASE_ANON_KEY = "填入你的anon public密钥";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+//登录校验，未登录踢回登录页
+async function checkAuth(){
+    const {data:{user}} = await supabase.auth.getUser();
+    if(!user){
+        location.href = "login.html";
+    }
+}
+
+//拉取官方作品列表
+async function loadWorks(){
+    const wrap = document.getElementById('worksWrap');
+    const {data,error} = await supabase.from('works').select('*').order('created_at',{ascending:false});
+    if(error){
+        wrap.innerHTML = `<div class="empty‑tip">读取作品失败</div>`;
+        return;
+    }
+    if(!data || data.length ===0){
+        wrap.innerHTML = `<div class="empty‑tip">暂无官方发布作品</div>`;
+        return;
+    }
+    let html = '';
+    data.forEach(item=>{
+        html +=`
+        <div class="work‑card">
+            <h3>${item.title}</h3>
+            <p>${item.content??''}</p>
+            <div style="margin‑top:0.8rem;opacity:0.6;font‑size:0.85rem">标签：${item.tag}</div>
+        </div>
+        `
+    })
+    wrap.innerHTML = html;
+}
+
+//退出登录
+document.getElementById('logoutBtn').onclick = async function(){
+    await supabase.auth.signOut();
+    localStorage.removeItem('siteTheme');
+    location.href = "index.html";
+}
+
+//页面执行
+(async ()=>{
+    await checkAuth();
+    await loadWorks();
+})();
+</script>
+</body>
+</html>
