@@ -239,7 +239,7 @@
         async function loadPosts(){
             const {data,error} = await supabase
             .from('forum_posts')
-            .select('*,profiles(nickname),forum_comments(*,profiles(nickname))')
+            .select('*,forum_comments(*)')
             .order('created_at',{ascending:false});
 
             const wrap = document.getElementById('postList');
