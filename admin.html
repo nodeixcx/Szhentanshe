@@ -185,19 +185,24 @@
 
         // 权限校验：不是管理员直接跳dashboard
         async function checkAdmin(){
-            const {data:{user}} = await supabase.auth.getUser();
-            if(!user){
-                showToast("未登录",true);
-                setTimeout(()=>location.href="login.html",600);
-                return false;
-            }
-            const {data:profile} = await supabase.from('profiles').select('is_admin').eq('id',user.id).single();
-            if(!profile?.is_admin){
-                showToast("无管理员权限",true);
-                setTimeout(()=>location.href="dashboard.html",600);
-                return false;
-            }
-            return true;
+    const {data:{user}} = await supabase.auth.getUser();
+    if(!user){
+        showToast("未登录",true);
+        setTimeout(()=>location.href="login.html",600);
+        return false;
+    }
+    const {data:profile,error} = await supabase.from('profiles').select('is_admin').eq('id',user.id);
+    if(error || !profile || profile.length===0){
+        showToast("用户资料不存在",true);
+        setTimeout(()=>location.href="dashboard.html",600);
+        return false;
+    }
+    if(!profile[0]?.is_admin){
+        showToast("无管理员权限",true);
+        setTimeout(()=>location.href="dashboard.html",600);
+        return false;
+    }
+    return true;
         }
 
         // 加载作品列表
