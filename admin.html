@@ -284,11 +284,36 @@
         }
 
         (async function boot(){
-            await loadSupabase();
-            const ok = await checkAdmin();
-            if(!ok) return;
-            await renderList();
-        })();
+    await loadSupabase();
+
+    // 等待supabase完成会话恢复+token自动刷新，等待最多1.2秒
+    let waitCount = 0;
+    let session = null;
+    while(waitCount < 12){
+        const res = await supabase.auth.getSession();
+        session = res.data.session;
+        if(session) break;
+        waitCount++;
+        await new Promise(r=>setTimeout(r,100));
+    }
+
+    // 没有会话直接跳转登录
+    if(!session){
+        location.replace("login.html");
+        return;
+    }
+
+    const ok = await checkAdmin();
+    if(!ok) return;
+    await renderList();
+})();
+
+// 保留状态变化监听
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+    setTimeout(()=>location.replace('login.html'),800);
+  }
+});
         supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
     showToast('登录会话已过期，请重新登录', true);
