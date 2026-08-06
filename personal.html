@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜个人中心</title>
+    <!-- 静态预加载Supabase SDK，解决异步加载时序bug -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1"></script>
+    <style>
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255,255,255,0.08);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc;
+            --text-main: #11141c;
+            --text-sub: #595d6b;
+            --accent: #507ee8;
+            --accent-fade: rgba(80, 126, 232, 0.12);
+            --border-fade: rgba(0, 0, 0, 0.1);
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, -apple-system, sans-serif}
+        body{background:var(--bg-primary);color:var(--text-main);min-height:100vh;transition: var(--transition)}
+        nav{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1.2rem 5%;border-bottom:1px solid var(--border-fade)}
+        .brand{font-size:1.4rem;font-weight:bold}
+        .nav-spacer{flex:1}
+        nav button, nav a{
+            background:transparent;
+            color:var(--text-main);
+            border:1px solid var(--border-fade);
+            padding:0.5rem 1rem;
+            border-radius:8px;
+            text-decoration:none;
+            cursor:pointer;
+            transition:var(--transition);
+        }
+        nav button:hover, nav a:hover{
+            border-color:var(--accent);
+            background:var(--accent-fade);
+        }
+        main{max-width:1000px;margin:3rem auto;padding:0 5%}
+        h2{margin-bottom:1.2rem}
+        .card{
+            border:1px solid var(--border-fade);
+            border-radius:12px;
+            padding:1.6rem;
+            margin-bottom:1.5rem;
+            transition:var(--transition);
+        }
+        .card:hover{border-color:var(--accent)}
+        .info-row{margin:0.7rem 0;font-size:1rem}
+        .label{color:var(--text-sub);margin-right:0.5rem}
+        input{
+            width:100%;
+            background:transparent;
+            color:var(--text-main);
+            border:1px solid var(--border-fade);
+            border-radius:8px;
+            padding:0.7rem;
+            margin:0.6rem 0;
+        }
+        .btn{
+            background:var(--accent);
+            color:white;
+            border:none;
+            padding:0.6rem 1.2rem;
+            border-radius:8px;
+            cursor:pointer;
+        }
+        .toast{
+            position:fixed;
+            bottom:2rem;
+            left:50%;
+            transform:translateX(-50%);
+            background:var(--accent);
+            color:#fff;
+            padding:0.8rem 1.6rem;
+            border-radius:8px;
+            font-size:0.95rem;
+            box-shadow:0 8px 24px rgba(0,0,0,0.3);
+            z-index:999;
+            opacity:0;
+            transition:opacity 0.3s;
+            pointer-events:none;
+        }
+        .toast.show{opacity:1;pointer-events:auto}
+        .toast.error{background:#f87171}
+        .debug-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-fade);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            white-space: pre-wrap;
+            word-break: break-all;
+            min-height: 120px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .debug-box .err { color: #f87171; }
+        .debug-box .ok { color: #6ee7b7; }
+        .debug-box .warn { color: #fbbf24; }
+        .debug-box .info { color: var(--text-sub); }
+        .btn-check {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">S侦探社</div>
+        <div class="nav-spacer"></div>
+        <button id="themeToggle">切换明暗</button>
+        <a href="dashboard.html">首页</a>
+        <a href="personal.html">个人中心</a>
+        <a href="forum.html">论坛</a>
+        <button id="logoutBtn">退出登录</button>
+    </nav>
+    <main>
+        <h2>个人中心</h2>
+        <div class="card">
+            <div class="info-row"><span class="label">用户ID：</span><span id="uid">—</span></div>
+            <div class="info-row"><span class="label">邮箱：</span><span id="email">—</span></div>
+            <div class="info-row"><span class="label">注册时间：</span><span id="createdAt">—</span></div>
+            <hr style="margin:1rem 0;border-color:var(--border-fade)">
+            <div class="info-row"><span class="label">昵称：</span></div>
+            <input id="nickInput" placeholder="设置你的昵称">
+            <button class="btn" id="saveNick">保存昵称</button>
+        </div>
+        <button class="btn-check" id="checkBtn">🔍 点击检查登录状态</button>
+        <div class="debug-box" id="debugBox">点击上方按钮查看状态</div>
+    </main>
+    <div id="toast" class="toast"></div>
+    <script>
+        // ================== 主题切换 ==================
+        (function initTheme() {
+            const htmlRoot = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('site-theme');
+            if (saved === 'light') htmlRoot.classList.add('light');
+            themeBtn.addEventListener('click', function() {
+                htmlRoot.classList.toggle('light');
+                localStorage.setItem('site-theme', htmlRoot.classList.contains('light') ? 'light' : 'dark');
+            });
+        })();
+
+        // ================== Toast提示 ==================
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // ================== 调试输出面板 ==================
+        const debugBox = document.getElementById('debugBox');
+        function logToBox(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const line = `[${time}] ${msg}`;
+            console.log(line);
+            const div = document.createElement('div');
+            div.textContent = line;
+            if (type === 'error') div.className = 'err';
+            else if (type === 'success') div.className = 'ok';
+            else if (type === 'warn') div.className = 'warn';
+            else div.className = 'info';
+            debugBox.appendChild(div);
+            debugBox.scrollTop = debugBox.scrollHeight;
+        }
+
+        // ================== Supabase 基础配置（删除异步加载逻辑） ==================
+        const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+        const STORAGE_KEY = 'sb-auth-token-sdetective';
+        // 直接同步初始化，无需等待动态加载
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                storageKey: STORAGE_KEY
+            }
+        });
+        const sdkReady = true;
+
+        // ================== 手动检测登录状态（页面不自动跳转，仅点击触发） ==================
+        async function checkLogin() {
+            debugBox.innerHTML = '';
+            logToBox('🔍 开始检测登录状态...', 'info');
+            // 读取本地存储token
+            const token = localStorage.getItem(STORAGE_KEY);
+            logToBox(`📦 localStorage["${STORAGE_KEY}"] = ${token ? '存在 (长度 ' + token.length + ')' : '❌ 不存在'}`, token ? 'success' : 'error');
+
+            logToBox('⏳ 正在获取会话...', 'info');
+            try {
+                const { data, error } = await supabase.auth.getSession();
+                if (error) {
+                    logToBox('❌ getSession 出错: ' + error.message, 'error');
+                    return;
+                }
+                const session = data.session;
+                if (session) {
+                    logToBox('✅ 会话获取成功！', 'success');
+                    logToBox(`👤 用户邮箱: ${session.user.email}`, 'success');
+                    logToBox(`🆔 用户ID: ${session.user.id}`, 'success');
+                    // 回填页面信息
+                    document.getElementById('uid').textContent = session.user.id;
+                    document.getElementById('email').textContent = session.user.email;
+                    document.getElementById('createdAt').textContent = new Date(session.user.created_at).toLocaleString();
+                    // 读取用户昵称
+                    try {
+                        const { data: prof, error: profErr } = await supabase
+                            .from('profiles')
+                            .select('nickname')
+                            .eq('id', session.user.id)
+                            .single();
+                        if (profErr) {
+                            logToBox('⚠️ 读取 profiles 表出错: ' + profErr.message, 'warn');
+                        } else if (prof) {
+                            logToBox('✅ 昵称: ' + (prof.nickname || '(未设置)'), 'success');
+                            document.getElementById('nickInput').value = prof.nickname || '';
+                        } else {
+                            logToBox('⚠️ profiles 表中没有该用户记录', 'warn');
+                        }
+                    } catch (err) {
+                        logToBox('❌ 读取 profiles 异常: ' + err.message, 'error');
+                    }
+                } else {
+                    logToBox('❌ 未获取到会话 (session 为 null)', 'error');
+                }
+            } catch (err) {
+                logToBox('❌ getSession 异常: ' + err.message, 'error');
+            }
+            logToBox('🏁 检测完成', 'info');
+        }
+
+        // ================== 退出登录按钮 ==================
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            if (confirm("确定退出登录？")) {
+                await supabase.auth.signOut();
+                localStorage.removeItem(STORAGE_KEY);
+                showToast('已退出');
+                setTimeout(() => location.href = "login.html", 500);
+            }
+        });
+
+        // ================== 保存昵称 ==================
+        document.getElementById('saveNick').addEventListener('click', async function() {
+            const nick = document.getElementById('nickInput').value.trim();
+            if (!nick) { showToast("昵称不能为空", true); return; }
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { showToast("未登录", true); return; }
+            const { error } = await supabase.from('profiles').update({ nickname: nick }).eq('id', user.id);
+            if (error) { showToast("保存失败：" + error.message, true); return; }
+            showToast("昵称保存成功！");
+        });
+
+        // 绑定检测按钮
+        document.getElementById('checkBtn').addEventListener('click', checkLogin);
+
+        // 页面加载仅打印提示，不自动鉴权跳转
+        logToBox('✅ SDK已就绪，点击按钮手动检查登录状态', 'success');
+
+        // 会话状态监听（仅日志，不自动跳转）
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                logToBox('🔴 会话已退出', 'error');
+                showToast('已退出登录', true);
+            }
+        });
+    </script>
+</body>
+</html>
