@@ -260,25 +260,33 @@
 
         // ========== 9. 页面入口【免登核心逻辑：优先读取本地缓存session，不联网】 ==========
         (async function init() {
-            const sdkReady = await loadSupabase();
-            if (!sdkReady) return;
-            // 第一步：读取本地存储的登录会话（纯本地读取，不用请求后端）
-            const { data: { session } } = await supabase.auth.getSession();
-            if(!session){
-                showToast('未登录，请前往登录页', true);
-                setTimeout(() => location.replace("login.html"), 600);
-                return;
-            }
-            // 本地有登录记录，加载管理员权限+作品
-            await checkAdmin(session.user.id);
-            await loadWorks();
-        })();
-        supabase.auth.onAuthStateChange((event, session) => {
+  const sdkReady = await loadSupabase();
+  if (!sdkReady) return;
+
+  // 循环等待会话恢复，给token刷新留出时间，最多1200ms
+  let waitCount = 0;
+  let session = null;
+  while(waitCount < 12){
+    const res = await supabase.auth.getSession();
+    session = res.data.session;
+    if(session) break;
+    waitCount++;
+    await new Promise(r=>setTimeout(r,100));
+  }
+
+  if(!session){
+      showToast('未登录，请前往登录页', true);
+      setTimeout(() => location.replace("login.html"), 600);
+      return;
+  }
+
+  await checkAdmin(session.user.id);
+  await loadWorks();
+})();
+
+supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
     showToast('登录会话已过期，请重新登录', true);
     setTimeout(()=>location.replace('login.html'),800);
   }
 });
-    </script>
-</body>
-</html>
