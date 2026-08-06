@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜管理员后台</title>
+    <!-- ✅ 静态预加载 Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1"></script>
+    <style>
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255,255,255,0.08);
+            --danger: #f87171;
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc;
+            --text-main: #11141c;
+            --text-sub: #6b7280;
+            --accent: #507ee8;
+            --accent-fade: rgba(80, 126, 232, 0.1);
+            --border-fade: rgba(0,0,0,0.1);
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, -apple-system, sans-serif}
+        body{background:var(--bg-primary);color:var(--text-main);min-height:100vh;transition:var(--transition)}
+        nav{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1.2rem 5%;border-bottom:1px solid var(--border-fade)}
+        .brand{font-size:1.4rem;font-weight:bold}
+        .nav-spacer{flex:1}
+        nav button, nav a{
+            background:transparent;
+            color:var(--text-main);
+            border:1px solid var(--border-fade);
+            padding:0.5rem 1rem;
+            border-radius:8px;
+            text-decoration:none;
+            cursor:pointer;
+            transition:var(--transition);
+        }
+        nav button:hover, nav a:hover{
+            border-color:var(--accent);
+            background:var(--accent-fade);
+        }
+        main{max-width:900px;margin:2rem auto;padding:0 5%}
+        section{margin-bottom:2.5rem}
+        h2{margin-bottom:1rem}
+        .form-item{margin-bottom:1rem}
+        label{display:block;margin-bottom:0.4rem}
+        input,textarea{
+            width:100%;
+            background:transparent;
+            border:1px solid var(--border-fade);
+            color:var(--text-main);
+            border-radius:8px;
+            padding:0.8rem;
+            font-size:1rem;
+        }
+        textarea{min-height:140px;resize:vertical}
+        .btn{
+            border:1px solid var(--accent);
+            background:var(--accent-fade);
+            color:var(--accent);
+            padding:0.6rem 1.2rem;
+            border-radius:8px;
+            cursor:pointer;
+        }
+        .btn-danger{
+            border-color:var(--danger);
+            background:rgba(248,113,113,0.1);
+            color:var(--danger);
+        }
+        .item-card{
+            border:1px solid var(--border-fade);
+            border-radius:10px;
+            padding:1rem;
+            margin-bottom:1rem;
+        }
+        .item-card h4{margin-bottom:0.4rem}
+        .toast{
+            position:fixed;
+            bottom:2rem;
+            left:50%;
+            transform:translateX(-50%);
+            background:var(--accent);
+            color:#fff;
+            padding:0.8rem 1.6rem;
+            border-radius:8px;
+            font-size:0.95rem;
+            box-shadow:0 8px 24px rgba(0,0,0,0.3);
+            z-index:999;
+            opacity:0;
+            pointer-events:none;
+            transition:opacity 0.3s;
+        }
+        .toast.show{opacity:1;pointer-events:auto}
+        .toast.error{background:#f87171}
+        #imgPreview{margin:8px 0;max-width:300px;}
+        #imgPreview img{max-width:100%;border-radius:8px;}
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">S侦探社｜管理员后台</div>
+        <div class="nav-spacer"></div>
+        <button id="themeToggle">切换明暗</button>
+        <a href="dashboard.html">返回主页</a>
+    </nav>
+
+    <main>
+        <section>
+            <h2>发布新官方作品</h2>
+            <div class="form-item">
+                <label>标题</label>
+                <input id="inpTitle" placeholder="输入作品标题">
+            </div>
+            <div class="form-item">
+                <label>内容</label>
+                <textarea id="inpContent" placeholder="输入正文内容"></textarea>
+            </div>
+            <div class="form-item">
+                <label>作品配图</label>
+                <input type="file" id="imgUpload" accept="image/*">
+                <div id="imgPreview"></div>
+            </div>
+            <button class="btn" id="submitBtn">提交发布</button>
+        </section>
+
+        <section>
+            <h2>已发布列表</h2>
+            <div id="listWrap">加载中……</div>
+        </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        (function initTheme() {
+            const html = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('site-theme');
+            if (saved === 'light') html.classList.add('light');
+            themeBtn.onclick = ()=>{
+                html.classList.toggle('light');
+                localStorage.setItem('site-theme', html.classList.contains('light') ? 'light' : 'dark');
+            };
+        })();
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // ================== Supabase 配置（静态加载，同步初始化） ==================
+        const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+        const STORAGE_KEY = 'sb-auth-token-sdetective';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                storageKey: STORAGE_KEY
+            }
+        });
+        let uploadedImageUrl = null;
+
+        // ================== 检查管理员权限 ==================
+        async function checkAdmin() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showToast("未登录", true);
+                setTimeout(() => location.href = "login.html", 600);
+                return false;
+            }
+            const { data: profile, error } = await supabase.from('profiles').select('is_admin').eq('id', user.id);
+            if (error || !profile || profile.length === 0) {
+                showToast("用户资料不存在", true);
+                setTimeout(() => location.href = "dashboard.html", 600);
+                return false;
+            }
+            if (!profile[0]?.is_admin) {
+                showToast("无管理员权限", true);
+                setTimeout(() => location.href = "dashboard.html", 600);
+                return false;
+            }
+            return true;
+        }
+
+        // ================== 图片上传 ==================
+        document.querySelector('#imgUpload').onchange = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop();
+            const filePath = `official/${Date.now()}-${Math.random().toFixed(4)}.${ext}`;
+            const { data, error } = await supabase.storage.from('site_images').upload(filePath, file);
+            if (error) {
+                showToast("图片上传失败：" + error.message, true);
+                return;
+            }
+            const { data: { publicUrl } } = supabase.storage.from('site_images').getPublicUrl(filePath);
+            uploadedImageUrl = publicUrl;
+            document.querySelector('#imgPreview').innerHTML = `<img src="${publicUrl}">`;
+            showToast("图片上传成功");
+        };
+
+        // ================== 渲染作品列表 ==================
+        async function renderList() {
+            const { data, error } = await supabase.from('works').select('*').order('created_at', { ascending: false });
+            const wrap = document.getElementById('listWrap');
+            if (error) {
+                wrap.innerHTML = `<div>读取失败：${error.message}</div>`;
+                return;
+            }
+            if (!data || data.length === 0) {
+                wrap.innerHTML = `<div style="opacity:0.6">暂无作品</div>`;
+                return;
+            }
+            let html = '';
+            data.forEach(item => {
+                let imgHtml = '';
+                if (item.image_url) imgHtml = `<div><img src="${item.image_url}" style="max-width:100%;border-radius:6px;margin:6px 0"></div>`;
+                html += `
+                <div class="item-card">
+                    <h4>${escapeHtml(item.title)}</h4>
+                    <div style="opacity:0.7;font-size:0.9rem;margin-bottom:0.6rem;">${escapeHtml(item.content)}</div>
+                    ${imgHtml}
+                    <button class="btn btn-danger" data-id="${item.id}">删除本条</button>
+                </div>
+                `;
+            });
+            wrap.innerHTML = html;
+            document.querySelectorAll('.btn-danger').forEach(btn => {
+                btn.onclick = async function() {
+                    const id = Number(this.dataset.id);
+                    if (!confirm("确定删除？不可恢复！")) return;
+                    const { error } = await supabase.from('works').delete().eq('id', id);
+                    if (error) showToast("删除失败：" + error.message, true);
+                    else { showToast("已删除"); renderList(); }
+                };
+            });
+        }
+
+        // ================== 发布作品 ==================
+        document.getElementById('submitBtn').onclick = async function() {
+            const title = document.getElementById('inpTitle').value.trim();
+            const content = document.getElementById('inpContent').value.trim();
+            if (!title || !content) {
+                showToast("标题、内容不能为空", true);
+                return;
+            }
+            const payload = { title, content, image_url: uploadedImageUrl };
+            const { error } = await supabase.from('works').insert([payload]);
+            if (error) {
+                showToast("发布失败：" + error.message, true);
+            } else {
+                showToast("发布成功！");
+                document.getElementById('inpTitle').value = '';
+                document.getElementById('inpContent').value = '';
+                document.querySelector('#imgUpload').value = '';
+                document.querySelector('#imgPreview').innerHTML = '';
+                uploadedImageUrl = null;
+                renderList();
+            }
+        };
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ================== 启动（安全检测） ==================
+        (async function boot() {
+            // 等待会话恢复，最多 3 秒
+            let waitCount = 0;
+            let session = null;
+            while (waitCount < 30) {
+                try {
+                    const res = await supabase.auth.getSession();
+                    session = res.data.session;
+                    if (session) break;
+                } catch (e) {
+                    console.warn("获取会话失败:", e);
+                }
+                waitCount++;
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            if (!session) {
+                showToast("未登录", true);
+                setTimeout(() => location.replace("login.html"), 600);
+                return;
+            }
+
+            const okAdmin = await checkAdmin();
+            if (!okAdmin) return;
+            await renderList();
+        })();
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+                showToast('登录会话已过期，请重新登录', true);
+                setTimeout(() => location.replace('login.html'), 800);
+            }
+        });
+    </script>
+</body>
+</html>
