@@ -184,22 +184,36 @@
         })
 
         async function init(){
-            const ok = await loadSupabase();
-            if(!ok) return;
-            const {data:{user}} = await supabase.auth.getUser();
-            if(!user){
-                showToast("未登录，跳转登录页",true);
-                setTimeout(()=>location.replace("login.html"),600);
-                return;
-            }
-            document.getElementById("uid").textContent = user.id;
-            document.getElementById("email").textContent = user.email;
-            document.getElementById("createdAt").textContent = new Date(user.created_at).toLocaleString();
+    const ok = await loadSupabase();
+    if(!ok) return;
 
-            //读取昵称
-            const {data:prof} = await supabase.from('profiles').select('nickname').eq('id',user.id).single();
-            if(prof) document.getElementById('nickInput').value = prof.nickname;
-        }
+    // 循环等待会话刷新完成，最多1200ms
+    let waitCount = 0;
+    let session = null;
+    while(waitCount < 12){
+        const res = await supabase.auth.getSession();
+        session = res.data.session;
+        if(session) break;
+        waitCount++;
+        await new Promise(r=>setTimeout(r,100));
+    }
+
+    if(!session){
+        showToast("未登录，跳转登录页",true);
+        setTimeout(()=>location.replace("login.html"),600);
+        return;
+    }
+
+    const user = session.user;
+    document.getElementById("uid").textContent = user.id;
+    document.getElementById("email").textContent = user.email;
+    document.getElementById("createdAt").textContent = new Date(user.created_at).toLocaleString();
+
+    //读取昵称
+    const {data:prof} = await supabase.from('profiles').select('nickname').eq('id', user.id).single();
+    if(prof) document.getElementById('nickInput').value = prof.nickname;
+}
+init();
         init();
         supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
