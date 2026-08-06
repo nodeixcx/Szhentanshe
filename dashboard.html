@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜内部主页</title>
+    <style>
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255,255,255,0.08);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc !important;
+            --text-main: #11141c !important;
+            --text-sub: #595d6b !important;
+            --accent: #507ee8 !important;
+            --accent-fade: rgba(80, 126, 232, 0.1) !important;
+            --border-fade: rgba(0, 0, 0, 0.1) !important;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, -apple-system, sans-serif}
+        body{background:var(--bg-primary);color:var(--text-main);min-height:100vh;transition: var(--transition)}
+        nav{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1.2rem 5%;border-bottom:1px solid var(--border-fade)}
+        .brand{font-size:1.4rem;font-weight:bold}
+        .nav-spacer{flex:1}
+        nav button, nav a{
+            background:transparent;
+            color:var(--text-main);
+            border:1px solid var(--border-fade);
+            padding:0.5rem 1rem;
+            border-radius:8px;
+            text-decoration:none;
+            cursor:pointer;
+            transition:var(--transition);
+        }
+        nav button:hover, nav a:hover{
+            border-color:var(--accent);
+            background:var(--accent-fade);
+        }
+        main{max-width:1000px;margin:3rem auto;padding:0 5%}
+        h2{margin-bottom:1.2rem;display:flex;align-items:center;gap:1rem}
+        .admin-entry{
+            font-size:0.9rem;
+            padding:0.35rem 0.8rem;
+            background:var(--accent-fade);
+            border:1px solid var(--accent);
+            border-radius:6px;
+            text-decoration:none;
+            color:var(--accent);
+        }
+        .works-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem}
+        .work-card{
+            background:var(--bg-primary);
+            border:1px solid var(--border-fade);
+            border-radius:12px;
+            padding:1.2rem;
+            transition:var(--transition);
+        }
+        .work-card:hover{border-color:var(--accent)}
+        .work-card h3{margin-bottom:0.6rem}
+        .work-card img{
+            width:100%;
+            border-radius:8px;
+            margin:8px 0;
+            object-fit:cover;
+        }
+        .empty-tip{opacity:0.6;text-align:center;padding:3rem 0}
+        .toast{
+            position:fixed;
+            bottom:2rem;
+            left:50%;
+            transform:translateX(-50%);
+            background:var(--accent);
+            color:#fff;
+            padding:0.8rem 1.6rem;
+            border-radius:8px;
+            font-size:0.95rem;
+            box-shadow:0 8px 24px rgba(0,0,0,0.3);
+            z-index:999;
+            opacity:0;
+            transition:opacity 0.3s;
+            pointer-events:none;
+        }
+        .toast.show{opacity:1;pointer-events:auto}
+        .toast.error{background:#f87171}
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">S侦探社</div>
+        <div class="nav-spacer"></div>
+        <button id="themeToggle">切换明暗</button>
+        <a href="personal.html">个人中心</a>
+        <a href="forum.html">论坛</a>
+        <button id="logoutBtn">退出登录</button>
+    </nav>
+    <main>
+        <h2>官方发布作品 <a id="adminLink" class="admin-entry" style="display:none" href="admin.html">管理员基地</a></h2>
+        <div id="worksWrap" class="works-container">
+            <div class="empty-tip">加载中……</div>
+        </div>
+    </main>
+    <div id="toast" class="toast"></div>
+    <script>
+        // 明暗主题
+        (function initTheme() {
+            const htmlRoot = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('site-theme');
+            if (saved === 'light') htmlRoot.classList.add('light');
+            themeBtn.addEventListener('click', function() {
+                htmlRoot.classList.toggle('light');
+                localStorage.setItem('site-theme', htmlRoot.classList.contains('light') ? 'light' : 'dark');
+            });
+        })();
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+        const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+        const STORAGE_KEY = 'sb-auth-token-sdetective';
+        let supabase = null;
+        const worksWrap = document.getElementById('worksWrap');
+        const adminLink = document.getElementById('adminLink');
+        function loadSupabase() {
+            return new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                script.onload = function() {
+                    try {
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                            auth: { persistSession: true, autoRefreshToken: true, storageKey: STORAGE_KEY }
+                        });
+                        worksWrap.innerHTML = `<div class="empty-tip">✅ 连接成功，加载作品中...</div>`;
+                        resolve(true);
+                    } catch (err) {
+                        worksWrap.innerHTML = `<div class="empty-tip">❌ 配置错误：${err.message}</div>`;
+                        showToast('Supabase 初始化失败', true);
+                        resolve(false);
+                    }
+                };
+                script.onerror = function() {
+                    const fallback = document.createElement('script');
+                    fallback.src = "https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                    fallback.onload = function(){
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                            auth: { persistSession: true, autoRefreshToken: true, storageKey: STORAGE_KEY }
+                        });
+                        worksWrap.innerHTML = `<div class="empty-tip">✅ 备用源连接成功</div>`;
+                        resolve(true);
+                    }
+                    fallback.onerror = ()=>{
+                        worksWrap.innerHTML = `<div class="empty-tip">❌ CDN加载失败</div>`;
+                        showToast('网络异常', true);
+                        resolve(false);
+                    }
+                    document.head.appendChild(fallback);
+                }
+                document.head.appendChild(script);
+            });
+        }
+        async function checkAdmin(uid) {
+            try {
+                const {data:profile} = await supabase.from('profiles').select('is_admin').eq('id',uid).single();
+                if(profile?.is_admin === true) adminLink.style.display = "inline-block";
+            } catch (err) {}
+        }
+        async function loadWorks() {
+            if (!supabase) return;
+            const { data, error } = await supabase.from('works').select('*').order('created_at', { ascending: false });
+            if (error) { worksWrap.innerHTML = `<div class="empty-tip">读取失败：${error.message}</div>`; return; }
+            if (!data.length) { works.innerHTML = `<div class="empty-tip">暂无官方发布作品</div>`; return; }
+            let tpl = '';
+            data.forEach(item => {
+                const title = escapeHtml(item.title || '无标题');
+                const content = escapeHtml(item.content || '');
+                let imgHtml = item.image_url ? `<img src="${escapeHtml(item.image_url)}">` : '';
+                tpl += `<div class="work-card"><h3>${title}</h3><p>${content}</p>${imgHtml}</div>`;
+            });
+            worksWrap.innerHTML = tpl;
+        }
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            if (!supabase) location.href = "login.html";
+            if (confirm('确定退出登录吗？')) {
+                await supabase.auth.signOut();
+                showToast('已退出');
+                setTimeout(() => location.href = "login.html", 500);
+            }
+        });
+        // 修复等待会话启动函数
+        (async function init() {
+            const sdkReady = await loadSupabase();
+            if (!sdkReady) return;
+            let waitCount = 0;
+            let session = null;
+            while(waitCount < 12){
+                const res = await supabase.auth.getSession();
+                session = res.data.session;
+                if(session) break;
+                waitCount++;
+                await new Promise(r=>setTimeout(r,100));
+            }
+            if(!session){
+                showToast('未登录，请前往登录页', true);
+                setTimeout(() => location.replace("login.html"), 600);
+                return;
+            }
+            await checkAdmin(session.user.id);
+            await loadWorks();
+        })();
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+                showToast('登录会话已过期，请重新登录', true);
+                setTimeout(()=>location.replace('login.html'),800);
+            }
+        });
+    </script>
+</body>
+</html>
