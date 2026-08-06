@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜内部主页</title>
+    <style>
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.08);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc;
+            --text-main: #11141c;
+            --text-sub: #595d6b;
+            --accent: #507ee8;
+            --accent-fade: rgba(80, 126, 232, 0.1);
+            --border-fade: rgba(0, 0, 0, 0.1);
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, -apple-system, sans-serif}
+        body{background:var(--bg-primary);color:var(--text-main);min-height:100vh;transition: var(--transition)}
+        nav{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1.2rem 5%;border-bottom:1px solid var(--border-fade)}
+        .brand{font-size:1.4rem;font-weight:bold}
+        .nav-spacer{flex:1}
+        nav button, nav a{
+            background:transparent;
+            color:var(--text-main);
+            border:1px solid var(--border-fade);
+            padding:0.5rem 1rem;
+            border-radius:8px;
+            text-decoration:none;
+            cursor:pointer;
+            transition:var(--transition);
+        }
+        nav button:hover, nav a:hover{
+            border-color:var(--accent);
+            background:var(--accent-fade);
+        }
+        main{max-width:1000px;margin:3rem auto;padding:0 5%}
+        h2{margin-bottom:1.2rem;display:flex;align-items:center;gap:1rem}
+        .admin-entry{
+            font-size:0.9rem;
+            padding:0.35rem 0.8rem;
+            background:var(--accent-fade);
+            border:1px solid var(--accent);
+            border-radius:6px;
+            text-decoration:none;
+            color:var(--accent);
+        }
+        .works-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem}
+        .work-card{
+            background:var(--bg-primary);
+            border:1px solid var(--border-fade);
+            border-radius:12px;
+            padding:1.2rem;
+            transition:var(--transition);
+        }
+        .work-card:hover{border-color:var(--accent)}
+        .work-card h3{margin-bottom:0.6rem}
+        .work-card img{
+            width:100%;
+            border-radius:8px;
+            margin:8px 0;
+            object-fit:cover;
+        }
+        .empty-tip{opacity:0.6;text-align:center;padding:3rem 0}
+        .toast{
+            position:fixed;
+            bottom:2rem;
+            left:50%;
+            transform:translateX(-50%);
+            background:var(--accent);
+            color:#fff;
+            padding:0.8rem 1.6rem;
+            border-radius:8px;
+            font-size:0.95rem;
+            box-shadow:0 8px 24px rgba(0,0,0,0.3);
+            z-index:999;
+            opacity:0;
+            transition:opacity 0.3s;
+            pointer-events:none;
+        }
+        .toast.show{opacity:1;pointer-events:auto}
+        .toast.error{background:#f87171}
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">S侦探社</div>
+        <div class="nav-spacer"></div>
+        <button id="themeToggle">切换明暗</button>
+        <a href="personal.html">个人中心</a>
+        <a href="forum.html">论坛</a>
+        <button id="logoutBtn">退出登录</button>
+    </nav>
+
+    <main>
+        <h2>官方发布作品 <a id="adminLink" class="admin-entry" style="display:none" href="admin.html">管理员基地</a></h2>
+        <div id="worksWrap" class="works-container">
+            <div class="empty-tip">加载中……</div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ========== 1. 完全独立的明暗主题切换 ==========
+        (function initTheme() {
+            const htmlRoot = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('site-theme');
+            if (saved === 'light') htmlRoot.classList.add('light');
+            themeBtn.addEventListener('click', function() {
+                if (htmlRoot.classList.contains('light')) {
+                    htmlRoot.classList.remove('light');
+                    localStorage.setItem('site-theme', 'dark');
+                } else {
+                    htmlRoot.classList.add('light');
+                    localStorage.setItem('site-theme', 'light');
+                }
+            });
+        })();
+
+        // ========== 2. Toast 轻提示 ==========
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // ========== 3. Supabase 配置 ==========
+        const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+
+        let supabase = null;
+        const worksWrap = document.getElementById('worksWrap');
+        const adminLink = document.getElementById('adminLink');
+
+        // ========== 4. 动态加载 Supabase SDK ==========
+        function loadSupabase() {
+            return new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                
+                script.onload = function() {
+                    try {
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                        worksWrap.innerHTML = `<div class="empty-tip">✅ 连接成功，加载作品中...</div>`;
+                        resolve(true);
+                    } catch (err) {
+                        worksWrap.innerHTML = `<div class="empty-tip">❌ 配置错误：${err.message}</div>`;
+                        showToast('Supabase 初始化失败，请检查 URL/密钥', true);
+                        resolve(false);
+                    }
+                };
+
+                script.onerror = function() {
+                    showToast('主 CDN 加载失败，尝试备用源...', true);
+                    const fallback = document.createElement('script');
+                    fallback.src = "https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                    fallback.onload = function() {
+                        try {
+                            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                            worksWrap.innerHTML = `<div class="empty-tip">✅ 备用源连接成功，加载作品中...</div>`;
+                            resolve(true);
+                        } catch (err) {
+                            worksWrap.innerHTML = `<div class="empty-tip">❌ 备用源配置错误：${err.message}</div>`;
+                            showToast('Supabase 初始化失败', true);
+                            resolve(false);
+                        }
+                    };
+                    fallback.onerror = function() {
+                        worksWrap.innerHTML = `<div class="empty-tip">❌ 所有 CDN 均加载失败，请检查网络</div>`;
+                        showToast('网络异常，无法加载 SDK', true);
+                        resolve(false);
+                    };
+                    document.head.appendChild(fallback);
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // ========== 5. 身份校验 + 判断管理员 ==========
+        async function checkAuth() {
+            if (!supabase) return false;
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    showToast('未登录，跳转登录页', true);
+                    setTimeout(() => location.replace('login.html'), 800);
+                    return false;
+                }
+                // 查询当前用户是否管理员
+                const {data:profile} = await supabase.from('profiles').select('is_admin').eq('id',user.id).single();
+                if(profile?.is_admin === true){
+                    adminLink.style.display = "inline-block";
+                }
+                return true;
+            } catch (err) {
+                showToast('登录状态检查失败：' + err.message, true);
+                return false;
+            }
+        }
+
+        // ========== 6.加载官方作品，表名恢复为 works ==========
+        async function loadWorks() {
+            if (!supabase) return;
+            try {
+                const { data, error } = await supabase
+                    .from('works')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    worksWrap.innerHTML = `<div class="empty-tip">读取失败：${error.message}</div>`;
+                    return;
+                }
+                if (!data || data.length === 0) {
+                    worksWrap.innerHTML = `<div class="empty-tip">暂无官方发布作品</div>`;
+                    return;
+                }
+                let tpl = '';
+                data.forEach(item => {
+                    const title = escapeHtml(item.title || '无标题');
+                    const content = escapeHtml(item.content || '');
+                    let imageHtml = '';
+                    if(item.image_url){
+                        // 有图片链接才渲染img标签
+                        const safeImgUrl = escapeHtml(item.image_url);
+                        imageHtml = `<img src="${safeImgUrl}" alt="作品配图">`;
+                    }
+                    tpl += `
+                        <div class="work-card">
+                            <h3>${title}</h3>
+                            <p>${content}</p>
+                            ${imageHtml}
+                        </div>
+                    `;
+                });
+                worksWrap.innerHTML = tpl;
+            } catch (err) {
+                worksWrap.innerHTML = `<div class="empty-tip">请求异常：${err.message}</div>`;
+                showToast('加载作品失败', true);
+            }
+        }
+
+        // ========== 7. HTML转义工具 ==========
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ========== 8.退出登录 ==========
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            if (!supabase) {
+                location.href = "index.html";
+                return;
+            }
+            if (confirm('确定要退出登录吗？')) {
+                await supabase.auth.signOut();
+                showToast('已退出');
+                setTimeout(() => location.href = "index.html", 500);
+            }
+        });
+
+        // ========== 9.页面启动入口 ==========
+        (async function init() {
+            const ok = await loadSupabase();
+            if (!ok) return;
+            const loggedIn = await checkAuth();
+            if (!loggedIn) return;
+            await loadWorks();
+        })();
+    </script>
+</body>
+</html>
