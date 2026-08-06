@@ -359,20 +359,37 @@
         })
 
         async function init(){
-            const ok = await loadSupabase();
-            if(!ok) return;
-            const {data:{user}} = await supabase.auth.getUser();
-            if(!user){
-                showToast("未登录，跳转登录页",true);
-                setTimeout(()=>location.replace("index.html"),600);
-                return;
-            }
-            myUid = user.id;
-            //读取当前用户管理员状态
-            const {data:profile} = await supabase.from('profiles').select('is_admin').eq('id',myUid).single();
-            isAdmin = !!profile?.is_admin;
-            await loadPosts();
-        }
+    const ok = await loadSupabase();
+    if(!ok) return;
+
+    // 等待会话/令牌刷新完成，最多等待1200ms
+    let waitCount = 0;
+    let session = null;
+    while(waitCount < 12){
+        const res = await supabase.auth.getSession();
+        session = res.data.session;
+        if(session) break;
+        waitCount++;
+        await new Promise(r=>setTimeout(r,100));
+    }
+
+    if(!session){
+        showToast("未登录，跳转登录页",true);
+        setTimeout(()=>location.replace("login.html"),600);
+        return;
+    }
+
+    const user = session.user;
+    myUid = user.id;
+
+    //读取当前用户管理员状态
+    const {data:profile} = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+    isAdmin = !!profile?.is_admin;
+
+    await loadPosts();
+}
+init();
+
         init();
         supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
