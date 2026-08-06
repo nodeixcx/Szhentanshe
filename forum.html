@@ -374,6 +374,12 @@
             await loadPosts();
         }
         init();
+        supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+    showToast('登录会话已过期，请重新登录', true);
+    setTimeout(()=>location.replace('login.html'),800);
+  }
+});
     </script>
 </body>
 </html>
