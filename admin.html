@@ -308,12 +308,6 @@
     await renderList();
 })();
 
-// 保留状态变化监听
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
-    setTimeout(()=>location.replace('login.html'),800);
-  }
-});
         supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
     showToast('登录会话已过期，请重新登录', true);
