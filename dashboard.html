@@ -182,6 +182,20 @@
             });
         }
 
+   // 循环输出作品
+works.forEach(item=>{
+  let imgHtml = '';
+  if(item.image_url){
+    imgHtml = `<img src="${item.image_url}" style="width:100%;border-radius:8px;margin:8px 0;object-fit:cover;">`
+  }
+  cardHtml += `
+  <div class="work-card">
+    <h3>${item.title}</h3>
+    <p>${item.content}</p>
+    ${imgHtml}
+  </div>
+  `
+})     
         // ========== 5. 身份校验 + 判断管理员 ==========
         async function checkAuth() {
             if (!supabase) return false;
