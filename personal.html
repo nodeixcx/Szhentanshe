@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜个人中心</title>
+    <style>
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.08);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc;
+            --text-main: #11141c;
+            --text-sub: #595d6b;
+            --accent: #507ee8;
+            --accent-fade: rgba(80, 126, 232, 0.12);
+            --border-fade: rgba(0, 0, 0, 0.1);
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, -apple-system, sans-serif}
+        body{background:var(--bg-primary);color:var(--text-main);min-height:100vh;transition: var(--transition)}
+        nav{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1.2rem 5%;border-bottom:1px solid var(--border-fade)}
+        .brand{font-size:1.4rem;font-weight:bold}
+        .nav-spacer{flex:1}
+        nav button, nav a{
+            background:transparent;
+            color:var(--text-main);
+            border:1px solid var(--border-fade);
+            padding:0.5rem 1rem;
+            border-radius:8px;
+            text-decoration:none;
+            cursor:pointer;
+            transition:var(--transition);
+        }
+        nav button:hover, nav a:hover{
+            border-color:var(--accent);
+            background:var(--accent-fade);
+        }
+        main{max-width:1000px;margin:3rem auto;padding:0 5%}
+        h2{margin-bottom:1.2rem}
+        .card{
+            border:1px solid var(--border-fade);
+            border-radius:12px;
+            padding:1.6rem;
+            margin-bottom:1.5rem;
+            transition:var(--transition);
+        }
+        .card:hover{border-color:var(--accent)}
+        .info-row{margin:0.7rem 0;font-size:1rem}
+        .label{color:var(--text-sub);margin-right:0.5rem}
+        input{
+            width:100%;
+            background:transparent;
+            color:var(--text-main);
+            border:1px solid var(--border-fade);
+            border-radius:8px;
+            padding:0.7rem;
+            margin:0.6rem 0;
+        }
+        .btn{
+            background:var(--accent);
+            color:white;
+            border:none;
+            padding:0.6rem 1.2rem;
+            border-radius:8px;
+            cursor:pointer;
+        }
+        .toast{
+            position:fixed;
+            bottom:2rem;
+            left:50%;
+            transform:translateX(-50%);
+            background:var(--accent);
+            color:#fff;
+            padding:0.8rem 1.6rem;
+            border-radius:8px;
+            font-size:0.95rem;
+            box-shadow:0 8px 24px rgba(0,0,0,0.3);
+            z-index:999;
+            opacity:0;
+            transition:opacity 0.3s;
+            pointer-events:none;
+        }
+        .toast.show{opacity:1;pointer-events:auto}
+        .toast.error{background:#f87171}
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">S侦探社</div>
+        <div class="nav-spacer"></div>
+        <button id="themeToggle">切换明暗</button>
+        <a href="dashboard.html">首页</a>
+        <a href="personal.html">个人中心</a>
+        <a href="forum.html">论坛</a>
+        <button id="logoutBtn">退出登录</button>
+    </nav>
+
+    <main>
+        <h2>个人中心</h2>
+        <div class="card">
+            <div class="info-row"><span class="label">用户ID：</span><span id="uid">—</span></div>
+            <div class="info-row"><span class="label">邮箱：</span><span id="email">—</span></div>
+            <div class="info-row"><span class="label">注册时间：</span><span id="createdAt">—</span></div>
+            <hr style="margin:1rem 0;border-color:var(--border-fade)">
+            <div class="info-row"><span class="label">昵称：</span></div>
+            <input id="nickInput" placeholder="设置你的昵称">
+            <button class="btn" id="saveNick">保存昵称</button>
+        </div>
+    </main>
+    <div id="toast" class="toast"></div>
+
+    <script>
+        (function initTheme() {
+            const htmlRoot = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('site-theme');
+            if (saved === 'light') htmlRoot.classList.add('light');
+            themeBtn.addEventListener('click', function() {
+                if (htmlRoot.classList.contains('light')) {
+                    htmlRoot.classList.remove('light');
+                    localStorage.setItem('site-theme', 'dark');
+                } else {
+                    htmlRoot.classList.add('light');
+                    localStorage.setItem('site-theme', 'light');
+                }
+            });
+        })();
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+        let supabase = null;
+
+        function loadSupabase() {
+            return new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                script.onload = ()=>{
+                    supabase = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+                    resolve(true);
+                }
+                script.onerror = ()=>{
+                    const fb = document.createElement('script');
+                    fb.src = "https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                    fb.onload = ()=>{
+                        supabase = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+                        resolve(true);
+                    }
+                    fb.onerror = ()=>{
+                        resolve(false);
+                    }
+                    document.head.appendChild(fb);
+                }
+                document.head.appendChild(script);
+            })
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click',async function(){
+            if(supabase && confirm("确定退出登录？")){
+                await supabase.auth.signOut();
+            }
+            location.href="login.html";
+        })
+
+        document.getElementById('saveNick').addEventListener('click',async function(){
+            const nick = document.getElementById('nickInput').value.trim();
+            if(!nick){showToast("昵称不能为空",true);return;}
+            const {data:{user}} = await supabase.auth.getUser();
+            const {error} = await supabase.from('profiles').update({nickname:nick}).eq('id',user.id);
+            if(error){showToast("保存失败："+error.message,true);return;}
+            showToast("昵称保存成功！");
+        })
+
+        async function init(){
+            const ok = await loadSupabase();
+            if(!ok) {
+                showToast("SDK加载失败，请刷新", true);
+                return;
+            }
+
+            // ✅ 修复：延长等待时间到 3 秒（30次重试），确保会话恢复
+            let waitCount = 0;
+            let session = null;
+            while(waitCount < 30){
+                try {
+                    const res = await supabase.auth.getSession();
+                    session = res.data.session;
+                    if(session) break;
+                } catch(e) {
+                    console.warn("获取会话失败:", e);
+                }
+                waitCount++;
+                await new Promise(r=>setTimeout(r,100));
+            }
+
+            if(!session){
+                showToast("未登录，跳转登录页",true);
+                setTimeout(()=>location.replace("login.html"),600);
+                return;
+            }
+
+            const user = session.user;
+            document.getElementById("uid").textContent = user.id;
+            document.getElementById("email").textContent = user.email;
+            document.getElementById("createdAt").textContent = new Date(user.created_at).toLocaleString();
+
+            const {data:prof} = await supabase.from('profiles').select('nickname').eq('id', user.id).single();
+            if(prof) document.getElementById('nickInput').value = prof.nickname;
+        }
+
+        init();
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+                showToast('登录会话已过期，请重新登录', true);
+                setTimeout(()=>location.replace('login.html'),800);
+            }
+        });
+    </script>
+</body>
+</html>
