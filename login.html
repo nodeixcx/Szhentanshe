@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 | S侦探社</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(255,255,255,0.04);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc !important;
+            --text-main: #11141c !important;
+            --text-sub: #595d6b !important;
+            --accent: #507ee8 !important;
+            --accent-fade: rgba(80, 126, 232, 0.1) !important;
+            --border-fade: rgba(0, 0, 0, 0.12) !important;
+            --card-bg: #ffffff !important;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            transition: var(--transition);
+        }
+        .login-wrap {
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid var(--border-fade);
+            border-radius: 14px;
+            background: var(--card-bg);
+            padding: 2.4rem;
+        }
+        .logo {
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
+        }
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid var(--border-fade);
+            margin-bottom: 1.8rem;
+        }
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.8rem;
+            cursor: pointer;
+            color: var(--text-sub);
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .tab-item.active {
+            color: var(--accent);
+        }
+        .tab-item.active::after {
+            content: "";
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+        }
+        .form-panel {
+            display: none;
+        }
+        .form-panel.show {
+            display: block;
+        }
+        .input-item {
+            margin-bottom: 1.2rem;
+        }
+        .input-item label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.92rem;
+            color: var(--text-sub);
+        }
+        .input-item input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border-fade);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+        }
+        .input-item input:focus {
+            border-color: var(--accent);
+        }
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .remember-row label {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: opacity 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .submit-btn:active {
+            opacity: 0.8;
+        }
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .msg-tip {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--text-sub);
+            min-height: 1.6rem;
+        }
+        .msg-tip.error {
+            color: #ef4444;
+        }
+        .msg-tip.success {
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrap">
+        <div class="logo">🕵️ S侦探社</div>
+        <div class="tab-bar">
+            <div class="tab-item active" data-tab="login">已有账号 · 登录</div>
+            <div class="tab-item" data-tab="register">新用户 · 注册</div>
+        </div>
+        <div class="form-panel show" id="panel-login">
+            <div class="input-item">
+                <label>邮箱</label>
+                <input type="email" id="login-email" autocomplete="username" placeholder="your@mail.com">
+            </div>
+            <div class="input-item">
+                <label>密码</label>
+                <input type="password" id="login-pwd" autocomplete="current-password" placeholder="输入密码">
+            </div>
+            <div class="remember-row">
+                <input type="checkbox" id="rememberMail">
+                <label for="rememberMail">记住邮箱（下次自动填充）</label>
+            </div>
+            <button class="submit-btn" id="btn-login">🔑 登录进入</button>
+            <div class="msg-tip" id="login-msg"></div>
+        </div>
+        <div class="form-panel" id="panel-register">
+            <div class="input-item">
+                <label>邮箱</label>
+                <input type="email" id="reg-email" placeholder="your@mail.com">
+            </div>
+            <div class="input-item">
+                <label>设置密码</label>
+                <input type="password" id="reg-pwd" placeholder="至少6位字符">
+            </div>
+            <div class="input-item">
+                <label>确认密码</label>
+                <input type="password" id="reg-pwd2" placeholder="再次输入密码">
+            </div>
+            <button class="submit-btn" id="btn-register">📝 创建账号</button>
+            <div class="msg-tip" id="reg-msg"></div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginMsg = document.getElementById('login-msg');
+            const loginEmail = document.getElementById('login-email');
+            const loginPwd = document.getElementById('login-pwd');
+            const rememberMail = document.getElementById('rememberMail');
+            const regEmail = document.getElementById('reg-email');
+            const regPwd = document.getElementById('reg-pwd');
+            const regPwd2 = document.getElementById('reg-pwd2');
+            const btnLogin = document.getElementById('btn-login');
+            const btnRegister = document.getElementById('btn-register');
+            const tabs = document.querySelectorAll('.tab-item');
+
+            //读取保存邮箱
+            const savedMail = localStorage.getItem('saved_login_mail');
+            if(savedMail){
+                loginEmail.value = savedMail;
+                rememberMail.checked = true;
+            }
+
+            //主题跟随系统
+            function applyTheme(){
+                const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+                const localTheme = localStorage.getItem('site-theme');
+                if(localTheme === 'light' || (!localTheme && prefersLight)){
+                    document.documentElement.classList.add('light');
+                }else{
+                    document.documentElement.classList.remove('light');
+                }
+            }
+            applyTheme();
+
+            let supabase = null;
+            let sdkReady = false;
+            const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+            const STORAGE_KEY = 'sb-auth-token-sdetective';
+
+            function initSupabase(){
+                try{
+                    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                        const { createClient } = window.supabase;
+                        supabase = createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+                            auth:{
+                                persistSession:true,
+                                autoRefreshToken:true,
+                                storageKey:STORAGE_KEY
+                            }
+                        });
+                        sdkReady = true;
+                    }
+                }catch(err){ console.warn(err); }
+            }
+
+            const script1 = document.createElement('script');
+            script1.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+            script1.onload = function(){
+                initSupabase();
+                if(!sdkReady){
+                    const script2 = document.createElement('script');
+                    script2.src = "https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                    script2.onload = function(){ initSupabase(); }
+                    document.head.appendChild(script2);
+                }
+            }
+            document.head.appendChild(script1);
+
+            tabs.forEach(t => {
+                t.addEventListener('click', function() {
+                    tabs.forEach(x => x.classList.remove('active'));
+                    this.classList.add('active');
+                    const tabName = this.dataset.tab;
+                    document.getElementById('panel-login').classList.toggle('show', tabName === 'login');
+                    document.getElementById('panel-register').classList.toggle('show', tabName === 'register');
+                });
+            });
+
+            btnLogin.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const email = loginEmail.value.trim();
+                const pwd = loginPwd.value;
+                loginMsg.className = 'msg-tip';
+                loginMsg.innerText = '⏳ 登录中...';
+                if (!email || !pwd) {
+                    loginMsg.className = 'msg-tip error';
+                    loginMsg.innerText = '⚠️ 请填写完整邮箱和密码';
+                    return;
+                }
+                if(rememberMail.checked){
+                    localStorage.setItem('saved_login_mail', email);
+                }else{
+                    localStorage.removeItem('saved_login_mail');
+                }
+                if (!sdkReady) {
+                    loginMsg.className = 'msg-tip error';
+                    loginMsg.innerText = '⚠️ SDK加载失败，关闭广告拦截';
+                    return;
+                }
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+                    if (error) {
+                        loginMsg.className = 'msg-tip error';
+                        loginMsg.innerText = '❌ ' + error.message;
+                        return;
+                    }
+                    loginMsg.className = 'msg-tip success';
+                    loginMsg.innerText = '✅ 登录成功';
+                    setTimeout(() => location.replace("dashboard.html"), 500);
+                } catch (err) {
+                    loginMsg.className = 'msg-tip error';
+                    loginMsg.innerText = '⚠️ 请求异常: ' + err.message;
+                }
+            });
+
+            btnRegister.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const email = regEmail.value.trim();
+                const pwd = regPwd.value;
+                const pwd2 = regPwd2.value;
+                const regMsg = document.getElementById('reg-msg');
+                regMsg.className = 'msg-tip';
+                regMsg.innerText = '⏳ 注册中...';
+                if (!email || !pwd || !pwd2) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ 完整填写全部字段';
+                    return;
+                }
+                if (pwd !== pwd2) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ 两次密码不一致';
+                    return;
+                }
+                if (pwd.length < 6) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ 密码至少6位';
+                    return;
+                }
+                if (!sdkReady) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ SDK加载失败，关闭广告拦截';
+                    return;
+                }
+                try {
+                    const { data, error } = await supabase.auth.signUp({ email, password: pwd });
+                    if (error) {
+                        regMsg.className = 'msg-tip error';
+                        regMsg.innerText = '❌ ' + error.message;
+                        return;
+                    }
+                    regMsg.className = 'msg-tip success';
+                    regMsg.innerText = '✅ 注册成功，请查收邮箱验证';
+                    regEmail.value = ''; regPwd.value = ''; regPwd2.value = '';
+                } catch (err) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ 请求异常: ' + err.message;
+                }
+            });
+
+            document.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        const panel = this.closest('.form-panel');
+                        if (panel) panel.querySelector('.submit-btn').click();
+                    }
+                });
+            });
+
+            (async function checkAuth() {
+                try {
+                    if (!sdkReady) return;
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        location.replace("dashboard.html");
+                    }
+                } catch (err) {}
+            })();
+        });
+    </script>
+</body>
+</html>
