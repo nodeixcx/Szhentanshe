@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 | S侦探社</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        :root {
+            --bg-primary: #0b0c10;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent: #7398ff;
+            --accent-fade: rgba(115, 152, 255, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(255,255,255,0.03);
+            --transition: all 0.28s ease;
+        }
+        html.light {
+            --bg-primary: #f7f8fc;
+            --text-main: #11141c;
+            --text-sub: #595d6b;
+            --accent: #507ee8;
+            --accent-fade: rgba(80, 126, 232, 0.1);
+            --border-fade: rgba(0, 0, 0, 0.1);
+            --card-bg: #ffffff;
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            transition: var(--transition);
+        }
+        .login-wrap {
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid var(--border-fade);
+            border-radius: 14px;
+            background: var(--card-bg);
+            padding: 2.4rem;
+        }
+        .logo {
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
+        }
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid var(--border-fade);
+            margin-bottom: 1.8rem;
+        }
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.8rem;
+            cursor: pointer;
+            color: var(--text-sub);
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .tab-item.active {
+            color: var(--accent);
+        }
+        .tab-item.active::after {
+            content: "";
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+        }
+        .form-panel {
+            display: none;
+        }
+        .form-panel.show {
+            display: block;
+        }
+        .input-item {
+            margin-bottom: 1.2rem;
+        }
+        .input-item label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.92rem;
+            color: var(--text-sub);
+        }
+        .input-item input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border-fade);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+        }
+        .input-item input:focus {
+            border-color: var(--accent);
+        }
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .remember-row label {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: opacity 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .submit-btn:active {
+            opacity: 0.8;
+        }
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .msg-tip {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--text-sub);
+            min-height: 1.6rem;
+        }
+        .msg-tip.error {
+            color: #f87171;
+        }
+        .msg-tip.success {
+            color: #6ee7b7;
+        }
+        .debug-console {
+            margin-top: 1.5rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            border: 1px solid var(--border-fade);
+            word-break: break-all;
+            max-height: 80px;
+            overflow-y: auto;
+            display: none;
+        }
+        .debug-console.show {
+            display: block;
+        }
+        .debug-console .log-line {
+            padding: 1px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .debug-console .log-line:last-child {
+            border-bottom: none;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .status-badge.ok {
+            background: rgba(110, 231, 183, 0.2);
+            color: #6ee7b7;
+        }
+        .status-badge.err {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+        .status-badge.warn {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrap">
+        <div class="logo">S侦探社</div>
+        <div class="tab-bar">
+            <div class="tab-item active" data-tab="login">已有账号 · 登录</div>
+            <div class="tab-item" data-tab="register">新用户 · 注册</div>
+        </div>
+        <!-- 关键：套form开启自动填充 -->
+        <form autocomplete="on">
+            <div class="form-panel show" id="panel-login">
+                <div class="input-item">
+                    <label>邮箱</label>
+                    <!-- 加标准name，浏览器识别账号 -->
+                    <input name="email" type="email" id="login-email" autocomplete="username" placeholder="your@mail.com">
+                </div>
+                <div class="input-item">
+                    <label>密码</label>
+                    <!-- 加标准name，浏览器识别密码 -->
+                    <input name="password" type="password" id="login-pwd" autocomplete="current-password" placeholder="输入密码">
+                </div>
+                <div class="remember-row">
+                    <input type="checkbox" id="rememberMail">
+                    <label for="rememberMail">记住邮箱（下次自动填充）</label>
+                </div>
+                <button type="submit" class="submit-btn" id="btn-login" disabled>🔑 登录进入</button>
+                <div class="msg-tip" id="login-msg"></div>
+            </div>
+        </form>
+
+        <form autocomplete="on">
+            <div class="form-panel" id="panel-register">
+                <div class="input-item">
+                    <label>邮箱</label>
+                    <input name="reg_email" type="email" id="reg-email" placeholder="your@mail.com">
+                </div>
+                <div class="input-item">
+                    <label>设置密码</label>
+                    <input name="reg_pwd" type="password" id="reg-pwd" autocomplete="new-password" placeholder="至少6位字符">
+                </div>
+                <div class="input-item">
+                    <label>确认密码</label>
+                    <input name="reg_pwd2" type="password" id="reg-pwd2" autocomplete="new-password" placeholder="再次输入密码">
+                </div>
+                <button type="button" class="submit-btn" id="btn-register" disabled>📝 创建账号</button>
+                <div class="msg-tip" id="reg-msg"></div>
+            </div>
+        </div>
+        <div class="debug-console" id="debugPanel"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugPanel = document.getElementById('debugPanel');
+            const loginMsg = document.getElementById('login-msg');
+            const loginEmail = document.getElementById('login-email');
+            const loginPwd = document.getElementById('login-pwd');
+            const rememberMail = document.getElementById('rememberMail');
+            const regEmail = document.getElementById('reg-email');
+            const regPwd = document.getElementById('reg-pwd');
+            const regPwd2 = document.getElementById('reg-pwd2');
+            const btnLogin = document.getElementById('btn-login');
+            const btnRegister = document.getElementById('btn-register');
+            const tabs = document.querySelectorAll('.tab-item');
+            if (!debugPanel || !btnLogin || !btnRegister) {
+                alert('❌ 页面加载异常，关键元素缺失，请刷新重试');
+                return;
+            }
+            let logCount = 0;
+            // 页面加载读取保存的邮箱，自动填入输入框
+            const savedMail = localStorage.getItem('saved_login_mail');
+            if(savedMail){
+                loginEmail.value = savedMail;
+                rememberMail.checked = true;
+            }
+            function logDebug(msg, isError = false, isWarn = false) {
+                logCount++;
+                const time = new Date().toLocaleTimeString();
+                const line = `[${time}] ${msg}`;
+                console.log(line);
+                try {
+                    debugPanel.classList.add('show');
+                    const div = document.createElement('div');
+                    div.className = 'log-line';
+                    let color = '';
+                    if (isError) color = 'color:#f87171;';
+                    else if (isWarn) color = 'color:#fbbf24;';
+                    else color = 'color:var(--text-sub);';
+                    div.style.cssText = color;
+                    div.textContent = line;
+                    debugPanel.appendChild(div);
+                    if (logCount > 50) debugPanel.querySelector('.log-line').remove();
+                    debugPanel.scrollTop = debugPanel.scrollHeight;
+                } catch (e) { console.warn('调试面板写入失败:', e); }
+            }
+            logDebug('🚀 页面初始化开始...');
+            let supabase = null;
+            let sdkReady = false;
+            const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+            const STORAGE_KEY = 'sb-auth-token-sdetective';
+            function initSupabase(){
+                try{
+                    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                        const { createClient } = window.supabase;
+                        supabase = createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+                            auth:{
+                                persistSession:true,
+                                autoRefreshToken:true,
+                                storageKey:STORAGE_KEY
+                            }
+                        });
+                        sdkReady = true;
+                        btnLogin.disabled = false;
+                        btnRegister.disabled = false;
+                        logDebug('✅ Supabase SDK 加载成功，持久会话开启');
+                        // 全局监听登录过期，自动跳转
+                        supabase.auth.onAuthStateChange((event, session)=>{
+                            if(event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)){
+                                logDebug('⚠️ 会话失效，跳转登录页');
+                            }
+                        })
+                    }else logDebug('❌ window.supabase 不存在',true);
+                }catch(err){ logDebug('❌ initSupabase异常:'+err.message,true); }
+            }
+            const script1 = document.createElement('script');
+            script1.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+            script1.onload = function(){
+                logDebug('📦 源1 cdn.jsdelivr.net 加载完成');
+                initSupabase();
+                if(!sdkReady){
+                    logDebug('🔄 源1无效，切换备用源unpkg',false,true);
+                    const script2 = document.createElement('script');
+                    script2.src = "https://unpkg.com/@supabase/supabase.js";
+                    script2.onload = function(){ logDebug('📦 源2 unpkg加载完成'); initSupabase(); }
+                    script2.onerror = function(){ logDebug('❌ 两个CDN全部加载失败，请关闭广告拦截/切换网络',true); }
+                    document.head.appendChild(script2);
+                }
+            }
+            script1.onerror = function(){
+                logDebug('❌ 源1 cdn.jsdelivr.net加载失败，切换备用源unpkg',false,true);
+                const script2 = document.createElement('script');
+                script2.src = "https://unpkg.com/@supabase/supabase.js";
+                script2.onload = function(){ logDebug('📦 源2 unpkg加载完成'); initSupabase(); }
+                script2.onerror = function(){ logDebug('❌ 两个CDN全部加载失败，请关闭广告拦截/切换网络',true); }
+                document.head.appendChild(script2);
+            }
+            document.head.appendChild(script1);
+            if (!supabase) {
+                supabase = { auth: { signInWithPassword: async () => ({ data: null, error: { message: 'SDK 未就绪，请稍后重试' } }), signUp: async () => ({ data: null, error: { message: 'SDK 未就绪，请稍后重试' } }), getUser: async () => ({ data: { user: null }, error: null }),onAuthStateChange:()=>{} } };
+                if (!sdkReady) logDebug('⚠️ 使用占位 Supabase 对象，SDK 还未加载', false, true);
+            }
+            tabs.forEach(t => {
+                t.addEventListener('click', function() {
+                    tabs.forEach(x => x.classList.remove('active'));
+                    this.classList.add('active');
+                    const tabName = this.dataset.tab;
+                    document.getElementById('panel-login').classList.toggle('show', tabName === 'login');
+                    document.getElementById('panel-register').classList.toggle('show', tabName === 'register');
+                    logDebug(`🔄 切换到: ${tabName}`);
+                });
+            });
+            logDebug('✅ Tab 切换已绑定，Tab不受网络影响，一定可以点击');
+            // 登录表单submit拦截，阻止页面刷新
+            document.querySelector('form').addEventListener('submit',e=>{
+                e.preventDefault();
+                btnLogin.click();
+            })
+            // 登录按钮逻辑
+            btnLogin.addEventListener('click', async function(e) {
+                e.preventDefault();
+                logDebug('🔵 点击了【登录】按钮');
+                const email = loginEmail.value.trim();
+                const pwd = loginPwd.value;
+                loginMsg.className = 'msg-tip';
+                loginMsg.innerText = '⏳ 登录中...';
+                if (!email || !pwd) {
+                    loginMsg.className = 'msg-tip error';
+                    loginMsg.innerText = '⚠️ 请填写完整邮箱和密码';
+                    logDebug('⚠️ 登录信息不完整', true);
+                    return;
+                }
+                // 处理记住邮箱勾选
+                if(rememberMail.checked){
+                    localStorage.setItem('saved_login_mail', email);
+                }else{
+                    localStorage.removeItem('saved_login_mail');
+                }
+                if (!sdkReady) {
+                    loginMsg.className = 'msg-tip error';
+                    loginMsg.innerText = '⚠️ SDK正在加载，CDN被拦截，请关闭广告拦截或切换网络';
+                    logDebug('⚠️ SDK 未就绪，无法登录', true);
+                    return;
+                }
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+                    if (error) {
+                        loginMsg.className = 'msg-tip error';
+                        loginMsg.innerText = '❌ ' + error.message;
+                        logDebug('❌ 登录失败: ' + error.message, true);
+                        return;
+                    }
+                    loginMsg.className = 'msg-tip success';
+                    loginMsg.innerText = '✅ 登录成功，会话自动保存，免登生效';
+                    logDebug('✅ 登录成功，跳转到 dashboard.html');
+                    setTimeout(() => location.replace("dashboard.html"), 500);
+                } catch (err) {
+                    loginMsg.className = 'msg-tip error';
+                    loginMsg.innerText = '⚠️ 请求异常: ' + err.message;
+                    logDebug('❌ 登录异常: ' + err.message, true);
+                }
+            });
+            logDebug('✅ 登录按钮已绑定');
+            btnRegister.addEventListener('click', async function(e) {
+                e.preventDefault();
+                logDebug('🟢 点击了【注册】按钮');
+                const email = regEmail.value.trim();
+                const pwd = regPwd.value;
+                const pwd2 = regPwd2.value;
+                regMsg.className = 'msg-tip';
+                regMsg.innerText = '⏳ 注册中...';
+                if (!email || !pwd || !regPwd2) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ 请完整填写所有字段';
+                    logDebug('⚠️ 注册信息不完整', true);
+                    return;
+                }
+                if (pwd !== pwd2) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ 两次密码不一致';
+                    logDebug('⚠️ 密码不一致', true);
+                    return;
+                }
+                if (pwd.length < 6) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ 密码至少6位';
+                    logDebug('⚠️ 密码太短', true);
+                }
+                if (!sdkReady) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ SDK正在加载，关闭广告拦截';
+                    logDebug('⚠️ SDK 未就绪', true);
+                    return;
+                }
+                try {
+                    const { data, error } = await supabase.auth.signUp({ email, password: pwd });
+                    if (error) {
+                        regMsg.className = 'msg-tip error';
+                        regMsg.innerText = '❌ ' + error.message;
+                        logDebug('❌ 注册失败: ' + error.message, true);
+                        return;
+                    }
+                    regMsg.className = 'msg-tip success';
+                    regMsg.innerText = '✅ 注册成功，请查收邮箱验证';
+                    logDebug('✅ 注册成功，邮件已发送');
+                    regEmail.value = ''; regPwd.value = ''; regPwd2.value = '';
+                } catch (err) {
+                    regMsg.className = 'msg-tip error';
+                    regMsg.innerText = '⚠️ 请求异常: ' + err.message;
+                    logDebug('❌ 注册异常: ' + err.message, true);
+                }
+            });
+            logDebug('✅ 注册按钮已绑定');
+            document.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        const panel = this.closest('.form-panel');
+                        if (panel) panel.querySelector('.submit-btn').click();
+                    }
+                });
+            });
+            logDebug('✅ 回车提交已绑定');
+            // 页面打开自动检测已有登录会话，直接跳主页（免登核心）
+            (async function checkAuth() {
+                try {
+                    logDebug('📄 读取本地持久登录会话...');
+                    if (!sdkReady) { logDebug('⏳ SDK 未就绪，跳过登录状态检查', false, true); return; }
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        logDebug(`👤 已存在免登会话: ${session.user.email}，直接跳转主页`);
+                        location.replace("dashboard.html");
+                    } else logDebug('👤 无保存登录，停留在登录页');
+                } catch (err) { logDebug('⚠️ 检查登录状态失败: ' + err.message, true); }
+            })();
+        });
+    </script>
+</body>
+</html>
