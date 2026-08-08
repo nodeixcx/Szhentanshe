@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社 | 欢迎</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        :root {
+            /* 主配色：秋波蓝、若竹 */
+            --wave-blue: #4A8BB8;
+            --bamboo-green: #87B88F;
+            --warm-tint: #D8A979;
+            /* 渐变背景，杜绝纯平底色 */
+            --bg-dark-gradient: linear-gradient(145deg, #0c0e13 0%, #12161d 100%);
+            --bg-light-gradient: linear-gradient(145deg, #f2f5f9 0%, #e8edf4 100%);
+            /* 文字层级 */
+            --text-main: #f2f3f7;
+            --text-sub: #a1a5b3;
+            --text-dark-main: #1a1f29;
+            --text-dark-sub: #565b68;
+            /* 透明辅助色 */
+            --accent-fade: rgba(74, 139, 184, 0.14);
+            --green-fade: rgba(135, 184, 143, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.09);
+            --border-light-fade: rgba(0, 0, 0, 0.11);
+            /* 动画：禁用ease-in-out，使用自定义弹性缓动 */
+            --anim-fast: all 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+            --anim-page-switch: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            /* 圆角限制，禁止超大圆角 */
+            --radius-sm: 4px;
+            --radius-md: 7px;
+        }
+        html.light {
+            --bg-primary: var(--bg-light-gradient);
+            --text-main: var(--text-dark-main);
+            --text-sub: var(--text-dark-sub);
+            --border-fade: var(--border-light-fade);
+        }
+        html:not(.light) {
+            --bg-primary: var(--bg-dark-gradient);
+        }
+        /* 全局噪点纹理，消除纯色背景 */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.04;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1.6rem;
+            display: flex;
+            flex-direction: column;
+            /* 页面入场动画初始状态 */
+            opacity: 0;
+            transform: translateY(12px);
+            transition: var(--anim-page-switch);
+        }
+        /* 页面入场完成状态 */
+        body.page-ready {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* 页面跳转离场动画 */
+        body.page-leave {
+            opacity: 0;
+            transform: translateY(-12px) scale(0.98);
+        }
+        .container {
+            max-width: 1160px;
+            margin: 0 2% 0 auto; /* 打破完美居中，右侧留白更小 */
+            width: 100%;
+            flex: 1;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem 2rem;
+            margin-bottom: 8rem;
+        }
+        .logo {
+            font-size: 1.45rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        .nav-wrapper {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        #themeBtn {
+            background: transparent;
+            border: 1px solid var(--border-fade);
+            color: var(--text-main);
+            padding: 0.6rem 1.1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--anim-fast);
+        }
+        #themeBtn:hover {
+            border-color: var(--wave-blue);
+            background: var(--accent-fade);
+        }
+        .hero {
+            max-width: 680px;
+            margin-left: 1%; /* 轻微左偏移，拒绝绝对居中 */
+        }
+        .hero h1 {
+            font-size: clamp(2.6rem, 9vw, 3.6rem);
+            font-weight: 400;
+            line-height: 1.15;
+            margin-bottom: 1.6rem;
+            letter-spacing: 2px;
+            opacity: 0.94;
+        }
+        .hero p {
+            color: var(--text-sub);
+            font-size: 1.12rem;
+            line-height: 1.8;
+            margin-bottom: 2.8rem;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.3rem;
+        }
+        .btn-solid {
+            padding: 1rem 2.2rem;
+            background: var(--wave-blue);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--anim-fast);
+        }
+        .btn-solid:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+            background: linear-gradient(90deg, var(--wave-blue), #5a99c7);
+        }
+        footer {
+            max-width: 1160px;
+            margin: 8rem 2% 0 auto; /* 非完美居中 */
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-fade);
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav>
+        <div class="logo">S侦探社</div>
+        <div class="nav-wrapper">
+            <button class="btn-solid" onclick="location.replace('login.html')">前往登录</button>
+            <button id="themeBtn">切换明暗</button>
+        </div>
+    </nav>
+    <section class="hero">
+        <h1>S侦探社官方站点</h1>
+        <p>交流、探讨、分享，在这里开启推理与创作。
+        <br>登录后查看社团原创作品、进入推理论坛。</p>
+        <div class="button-group">
+            <button class="btn-solid" onclick="location.replace('login.html')">前往登录</button>
+        </div>
+    </section>
+</div>
+<footer>
+    © 2026 S侦探社 | 推理创作社群
+</footer>
+<script>
+// 页面转场动画逻辑（新增）
+document.addEventListener('DOMContentLoaded', () => {
+    // 入场动画激活
+    document.body.classList.add('page-ready');
+
+    // 拦截所有a标签跳转，触发离场动画
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const target = this.getAttribute('href');
+            if(target && !target.startsWith('#')) {
+                e.preventDefault();
+                document.body.classList.add('page-leave');
+                setTimeout(() => location.href = target, 360);
+            }
+        })
+    })
+
+    // 重写location跳转方法，按钮location跳转统一带动画
+    const originReplace = location.replace;
+    const originAssign = location.assign;
+    location.replace = function(href) {
+        document.body.classList.add('page-leave');
+        setTimeout(() => originReplace.call(location, href), 360);
+    }
+    location.assign = function(href) {
+        document.body.classList.add('page-leave');
+        setTimeout(() => originAssign.call(location, href), 360);
+    }
+})
+
+// 原有主题切换代码（完全保留未修改）
+(function(){
+    const html = document.documentElement;
+    const btn = document.getElementById('themeBtn');
+    const savedTheme = localStorage.getItem('site-theme');
+    if(savedTheme === 'light'){
+        html.classList.add('light');
+    }
+    btn.onclick = function(){
+        if(html.classList.contains('light')){
+            html.classList.remove('light');
+            localStorage.setItem('site-theme','dark');
+        }else{
+            html.classList.add('light');
+            localStorage.setItem('site-theme','light');
+        }
+    }
+})();
+</script>
+</body>
+</html>
