@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜内部主页</title>
+    <style>
+        :root {
+            --primary: #4A8BB8;
+            --secondary: #87B88F;
+            --warm-tint: #D8A979;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent-fade: rgba(74, 139, 184, 0.14);
+            --green-fade: rgba(135, 184, 143, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.09);
+            --bezier: cubic-bezier(0.22, 0.01, 0.28, 1);
+            --noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            --bg-gradient: linear-gradient(145deg, #0c0e13, #12161d);
+            --card-bg: rgba(242, 243, 247, 0.03);
+            --pin-color: #7a7d85;
+            --thread-color: #c44b3a;
+        }
+
+        html.light {
+            --primary: #4A8BB8;
+            --secondary: #87B88F;
+            --warm-tint: #D8A979;
+            --text-main: #1a1f29;
+            --text-sub: #565b68;
+            --accent-fade: rgba(74, 139, 184, 0.14);
+            --green-fade: rgba(135, 184, 143, 0.12);
+            --border-fade: rgba(0, 0, 0, 0.11);
+            --bg-gradient: linear-gradient(145deg, #f8f8f6, #efefec);
+            --card-bg: rgba(26, 31, 41, 0.04);
+            --pin-color: #9a9da5;
+            --thread-color: #d45544;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+
+        body {
+            background-color: #f8f8f6;
+            background-image: var(--bg-gradient), var(--noise);
+            color: var(--text-main);
+            min-height: 100vh;
+            transition: background 0.34s var(--bezier), color 0.34s var(--bezier);
+            animation: pageIn 0.64s var(--bezier) forwards;
+            overflow-x: hidden;
+        }
+
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-exit {
+            animation: pageOut 0.48s var(--bezier) forwards;
+        }
+        @keyframes pageOut {
+            to { opacity: 0; transform: translateY(-18px) scale(0.97); }
+        }
+
+        /* ===== NAV ===== */
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            align-items: center;
+            padding: 1rem 3%;
+            border-bottom: 1px solid var(--border-fade);
+        }
+        .brand {
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: -0.02em;
+            margin-right: auto;
+        }
+        nav button, nav a {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-fade);
+            padding: 0.45rem 0.9rem;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: border-color 0.26s var(--bezier), background 0.26s var(--bezier), transform 0.2s var(--bezier);
+            white-space: nowrap;
+        }
+        nav button:hover, nav a:hover {
+            border-color: var(--primary);
+            background: var(--accent-fade);
+        }
+        nav button:active { transform: scale(0.96); }
+
+        /* ===== MAIN ===== */
+        main {
+            max-width: 1100px;
+            margin: 2rem 3% 4rem auto;
+            padding: 0 1rem;
+            position: relative;
+        }
+
+        /* ===== HEADER AREA ===== */
+        .page-header {
+            margin-bottom: 2.2rem;
+            position: relative;
+            padding-left: 1.2rem;
+        }
+        .page-header::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.25rem;
+            bottom: 0.25rem;
+            width: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+        .page-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            line-height: 1.3;
+        }
+        .page-header .subtitle {
+            font-size: 0.88rem;
+            color: var(--text-sub);
+            margin-top: 0.35rem;
+            font-weight: 400;
+        }
+        .admin-entry {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            background: var(--accent-fade);
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--primary);
+            transition: all 0.26s var(--bezier);
+            white-space: nowrap;
+        }
+        .admin-entry:hover {
+            border-color: var(--secondary);
+            background: var(--green-fade);
+        }
+
+        /* ===== THREAD LINES (SVG overlay behind cards) ===== */
+        .thread-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: visible;
+        }
+        .thread-line {
+            stroke: var(--thread-color);
+            stroke-width: 1.2;
+            fill: none;
+            opacity: 0.35;
+            stroke-linecap: round;
+        }
+
+        /* ===== WORKS CONTAINER (Detective Wall) ===== */
+        .works-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== WORK CARD (Evidence Card) ===== */
+        .work-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-fade);
+            border-radius: 5px;
+            padding: 1.8rem 1.3rem 1.1rem;
+            position: relative;
+            transition: transform 0.34s var(--bezier), box-shadow 0.34s var(--bezier), border-color 0.26s var(--bezier);
+            backdrop-filter: blur(2px);
+        }
+        .work-card::before {
+            /* Pin */
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 9px;
+            height: 9px;
+            background: var(--pin-color);
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.15);
+            opacity: 0.75;
+            transition: opacity 0.26s var(--bezier), background 0.26s var(--bezier);
+        }
+        .work-card::after {
+            /* Bottom label line */
+            content: "";
+            position: absolute;
+            bottom: 10px;
+            left: 1.3rem;
+            right: 1.3rem;
+            height: 1px;
+            background: var(--border-fade);
+            opacity: 0.4;
+        }
+        .work-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px) rotate(0deg) scale(1.01);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.1);
+        }
+        .work-card:hover::before {
+            opacity: 1;
+            background: var(--warm-tint);
+        }
+        .work-card h3 {
+            margin-top: 0.5rem;
+            margin-bottom: 0.6rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+        .work-card p {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .work-card img {
+            width: 100%;
+            border-radius: 3px;
+            margin: 0 0 0.6rem 0;
+            object-fit: cover;
+            display: block;
+            border: 1px solid var(--border-fade);
+            opacity: 0.9;
+            transition: opacity 0.26s var(--bezier);
+        }
+        .work-card:hover img {
+            opacity: 1;
+        }
+        .work-card .meta {
+            font-size: 0.72rem;
+            color: var(--text-sub);
+            opacity: 0.55;
+            margin-top: 0.2rem;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Rotation variations - only on desktop */
+        @media (min-width: 641px) {
+            .work-card:nth-child(3n+1) { transform: rotate(-0.6deg); }
+            .work-card:nth-child(3n+2) { transform: rotate(0.5deg); }
+            .work-card:nth-child(5n+1) { transform: rotate(-0.9deg); }
+            .work-card:nth-child(5n+3) { transform: rotate(0.3deg); }
+            .work-card:nth-child(7n+2) { transform: rotate(-0.2deg); }
+        }
+
+        /* ===== EMPTY TIP ===== */
+        .empty-tip {
+            opacity: 0.6;
+            text-align: left;
+            padding: 3rem 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            grid-column: 1 / -1;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: #fff;
+            padding: 0.8rem 1.6rem;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s var(--bezier);
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; pointer-events: auto; }
+        .toast.error { background: #c44b3a; }
+
+        /* ===== CLASSIC VIEW (Original Grid) ===== */
+        body.classic-view .works-container {
+            gap: 1.2rem;
+        }
+        body.classic-view .work-card {
+            padding: 1.2rem;
+            border-radius: 7px;
+            transform: none !important;
+        }
+        body.classic-view .work-card::before,
+        body.classic-view .work-card::after {
+            display: none;
+        }
+        body.classic-view .work-card:hover {
+            transform: translateY(-2px) scale(1) !important;
+        }
+        body.classic-view .work-card h3 {
+            margin-top: 0;
+        }
+        body.classic-view .thread-overlay {
+            display: none;
+        }
+        body.classic-view .page-header {
+            padding-left: 0;
+        }
+        body.classic-view .page-header::before {
+            display: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 640px) {
+            nav { padding: 0.8rem 2%; gap: 0.4rem; }
+            .brand { font-size: 1.15rem; }
+            nav button, nav a { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+            main { margin: 1.2rem 2% 3rem auto; padding: 0 0.5rem; }
+            .page-header { padding-left: 0.9rem; margin-bottom: 1.6rem; }
+            .page-header h2 { font-size: 1.25rem; }
+            .page-header .subtitle { font-size: 0.82rem; }
+            .works-container { grid-template-columns: 1fr; gap: 1.4rem; }
+            .work-card { padding: 1.5rem 1.1rem 1rem; transform: none !important; }
+            .work-card:hover { transform: translateY(-2px) scale(1.005) !important; }
+            .work-card h3 { font-size: 1rem; }
+            .work-card p { font-size: 0.88rem; white-space: pre-wrap; word-break: break-word; }
+            /* Hide threads on mobile - they look bad in single column */
+            .thread-overlay { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">S侦探社</div>
+        <button id="viewToggle" title="切换视图风格">经典视图</button>
+        <button id="themeToggle">切换明暗</button>
+        <a href="personal.html">个人中心</a>
+        <a href="forum.html">论坛</a>
+        <button id="logoutBtn">退出登录</button>
+    </nav>
+
+    <main>
+        <svg class="thread-overlay" id="threadOverlay" xmlns="http://www.w3.org/2000/svg"></svg>
+
+        <div class="page-header">
+            <h2>
+                官方发布作品
+                <a id="adminLink" class="admin-entry" style="display:none" href="admin.html">管理员基地</a>
+            </h2>
+            <p class="subtitle">线索板上张贴的每一份档案，都值得仔细推敲。</p>
+        </div>
+
+        <div id="worksWrap" class="works-container">
+            <div class="empty-tip">加载中……</div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ========== 0. 视图切换 ==========
+        (function initView() {
+            const viewBtn = document.getElementById('viewToggle');
+            const savedView = localStorage.getItem('site-view');
+            if (savedView === 'classic') {
+                document.body.classList.add('classic-view');
+                viewBtn.textContent = '线索视图';
+            }
+            viewBtn.addEventListener('click', function() {
+                const isClassic = document.body.classList.toggle('classic-view');
+                localStorage.setItem('site-view', isClassic ? 'classic' : 'detective');
+                viewBtn.textContent = isClassic ? '线索视图' : '经典视图';
+                if (!isClassic && window.innerWidth > 640) {
+                    setTimeout(drawThreads, 100);
+                }
+            });
+        })();
+
+        // ========== 1. 页面跳转动画 ==========
+        document.querySelectorAll('a').forEach(el => {
+            el.addEventListener('click', e => {
+                const targetHref = el.href;
+                e.preventDefault();
+                document.body.classList.add('page-exit');
+                setTimeout(() => location.href = targetHref, 440);
+            });
+        });
+
+        // ========== 2. 明暗主题切换 ==========
+        (function initTheme() {
+            const htmlRoot = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('site-theme');
+            if (saved === 'light') htmlRoot.classList.add('light');
+            themeBtn.addEventListener('click', function() {
+                htmlRoot.classList.toggle('light');
+                localStorage.setItem('site-theme', htmlRoot.classList.contains('light') ? 'light' : 'dark');
+                setTimeout(drawThreads, 100);
+            });
+        })();
+
+        // ========== 3. Toast 提示 ==========
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // ========== 4. 红线连接（线索视图，仅桌面端） ==========
+        function drawThreads() {
+            // Skip on mobile or classic view
+            if (document.body.classList.contains('classic-view')) return;
+            if (window.innerWidth <= 640) return;
+
+            const svg = document.getElementById('threadOverlay');
+            const cards = document.querySelectorAll('.work-card');
+            if (!svg || cards.length < 2) return;
+
+            const mainRect = document.querySelector('main').getBoundingClientRect();
+            svg.innerHTML = '';
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+
+            const pins = [];
+            cards.forEach(card => {
+                const r = card.getBoundingClientRect();
+                pins.push({
+                    x: r.left + r.width / 2 - mainRect.left,
+                    y: r.top + 14 - mainRect.top,
+                    w: r.width,
+                    h: r.height
+                });
+            });
+
+            // Only draw threads between cards that are in the same row (roughly)
+            // or between cards with sufficient horizontal distance
+            for (let i = 0; i < pins.length - 1; i++) {
+                const a = pins[i];
+                const b = pins[i + 1];
+                const dx = Math.abs(b.x - a.x);
+                const dy = Math.abs(b.y - a.y);
+
+                // Only connect if cards are on same row (small y diff) or nearby
+                if (dy < 80 && dx > 50) {
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    // Arc above the cards
+                    const midX = (a.x + b.x) / 2;
+                    const midY = Math.min(a.y, b.y) - 20 - Math.random() * 30;
+                    const d = `M ${a.x} ${a.y} Q ${midX} ${midY} ${b.x} ${b.y}`;
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', 'thread-line');
+                    svg.appendChild(path);
+                }
+            }
+
+            // Occasional cross-connections between same-row cards
+            for (let i = 0; i < pins.length; i++) {
+                for (let j = i + 2; j < pins.length; j++) {
+                    const a = pins[i];
+                    const b = pins[j];
+                    const dy = Math.abs(b.y - a.y);
+                    const dx = Math.abs(b.x - a.x);
+                    if (dy < 60 && dx > 80 && dx < 500 && Math.random() > 0.5) {
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        const midX = (a.x + b.x) / 2;
+                        const midY = Math.min(a.y, b.y) - 15 - Math.random() * 25;
+                        const d = `M ${a.x} ${a.y} Q ${midX} ${midY} ${b.x} ${b.y}`;
+                        path.setAttribute('d', d);
+                        path.setAttribute('class', 'thread-line');
+                        path.style.opacity = '0.2';
+                        svg.appendChild(path);
+                    }
+                }
+            }
+        }
+
+        // ========== 5. Supabase 全局配置 ==========
+        const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+        const STORAGE_KEY = 'sb-auth-token-sdetective';
+        let supabase = null;
+        let sdkReady = false;
+        const worksWrap = document.getElementById('worksWrap');
+        const adminLink = document.getElementById('adminLink');
+
+        // ========== 6. 加载SDK并强制持久会话 ==========
+        function loadSupabase() {
+            return new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                script.onload = function() {
+                    try {
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                            auth: {
+                                persistSession: true,
+                                autoRefreshToken: true,
+                                storageKey: STORAGE_KEY
+                            }
+                        });
+                        sdkReady = true;
+                        worksWrap.innerHTML = `<div class="empty-tip">连接成功，正在调取档案...</div>`;
+                        resolve(true);
+                    } catch (err) {
+                        worksWrap.innerHTML = `<div class="empty-tip">配置错误：${err.message}</div>`;
+                        showToast('Supabase 初始化失败，请检查 URL/密钥', true);
+                        resolve(false);
+                    }
+                };
+                script.onerror = function() {
+                    showToast('主 CDN 加载失败，尝试备用源...', true);
+                    const fallback = document.createElement('script');
+                    fallback.src = "https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+                    fallback.onload = function() {
+                        try {
+                            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                                auth: { persistSession: true, autoRefreshToken: true, storageKey: STORAGE_KEY }
+                            });
+                            sdkReady = true;
+                            worksWrap.innerHTML = `<div class="empty-tip">备用源连接成功，正在调取档案...</div>`;
+                            resolve(true);
+                        } catch (err) {
+                            worksWrap.innerHTML = `<div class="empty-tip">备用源配置错误：${err.message}</div>`;
+                            showToast('Supabase 初始化失败', true);
+                            resolve(false);
+                        }
+                    };
+                    fallback.onerror = function() {
+                        worksWrap.innerHTML = `<div class="empty-tip">所有 CDN 均加载失败，请检查网络</div>`;
+                        showToast('网络异常，无法加载 SDK', true);
+                        resolve(false);
+                    };
+                    document.head.appendChild(fallback);
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // ========== 7. 校验管理员身份 ==========
+        async function checkAdmin(uid) {
+            try {
+                const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', uid).single();
+                if (profile?.is_admin === true) {
+                    adminLink.style.display = "inline-block";
+                }
+            } catch (err) {
+                console.warn('检查管理员失败:', err);
+            }
+        }
+
+        // ========== 8. 加载作品 ==========
+        async function loadWorks() {
+            if (!supabase) {
+                worksWrap.innerHTML = `<div class="empty-tip">Supabase 未就绪</div>`;
+                return;
+            }
+            try {
+                const { data, error } = await supabase
+                    .from('works')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (error) {
+                    worksWrap.innerHTML = `<div class="empty-tip">读取失败：${error.message}</div>`;
+                    showToast('读取作品失败: ' + error.message, true);
+                    return;
+                }
+                if (!data || data.length === 0) {
+                    worksWrap.innerHTML = `<div class="empty-tip">暂无官方发布作品。线索板空空如也。</div>`;
+                    return;
+                }
+                let tpl = '';
+                data.forEach((item, idx) => {
+                    const title = escapeHtml(item.title || '未命名档案');
+                    const content = escapeHtml(item.content || '');
+                    const dateStr = item.created_at ? formatDate(item.created_at) : '';
+                    let imageHtml = '';
+                    if (item.image_url) {
+                        const safeImgUrl = escapeHtml(item.image_url);
+                        imageHtml = `<img src="${safeImgUrl}" alt="档案配图" loading="lazy">`;
+                    }
+                    tpl += `
+                        <div class="work-card" data-index="${idx}">
+                            <h3>${title}</h3>
+                            <p>${content}</p>
+                            ${imageHtml}
+                            ${dateStr ? `<div class="meta">归档时间：${dateStr}</div>` : ''}
+                        </div>
+                    `;
+                });
+                worksWrap.innerHTML = tpl;
+                // Draw threads after cards are rendered (desktop only)
+                setTimeout(drawThreads, 200);
+            } catch (err) {
+                worksWrap.innerHTML = `<div class="empty-tip">请求异常：${err.message}</div>`;
+                showToast('加载作品异常: ' + err.message, true);
+            }
+        }
+
+        function formatDate(iso) {
+            try {
+                const d = new Date(iso);
+                return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+            } catch { return ''; }
+        }
+
+        function debounce(fn, wait) {
+            let t;
+            return function() {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, arguments), wait);
+            };
+        }
+
+        // ========== 9. HTML转义防XSS ==========
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ========== 10. 退出登录 ==========
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            if (!sdkReady) {
+                showToast('正在初始化，请稍后重试', true);
+                return;
+            }
+            if (confirm('确定要退出登录吗？')) {
+                await supabase.auth.signOut();
+                localStorage.removeItem(STORAGE_KEY);
+                showToast('已退出，登录记录清除');
+                setTimeout(() => location.href = "login.html", 500);
+            }
+        });
+
+        // ========== 11. 页面入口 ==========
+        async function init() {
+            const sdkReadyFlag = await loadSupabase();
+            if (!sdkReadyFlag) return;
+
+            let waitCount = 0;
+            let session = null;
+            while (waitCount < 30) {
+                try {
+                    const res = await supabase.auth.getSession();
+                    session = res.data.session;
+                    if (session) break;
+                } catch (e) {
+                    console.warn('获取会话失败:', e);
+                }
+                waitCount++;
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            if (!session) {
+                showToast('未登录，请前往登录页', true);
+                setTimeout(() => location.replace("login.html"), 600);
+                return;
+            }
+
+            await checkAdmin(session.user.id);
+            await loadWorks();
+        }
+        init();
+
+        // ========== 12. 监听会话变化 ==========
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+                showToast('登录会话已过期，请重新登录', true);
+                setTimeout(() => location.replace('login.html'), 800);
+            }
+        });
+
+        // ========== 13. 窗口 resize 重绘红线 ==========
+        window.addEventListener('resize', debounce(() => {
+            drawThreads();
+        }, 250));
+    </script>
+</body>
+</html>
