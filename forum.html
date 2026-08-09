@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜论坛</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1"></script>
+    <style>
+        :root {
+            --primary: #4A8BB8;
+            --secondary: #87B88F;
+            --warm-tint: #D8A979;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent-fade: rgba(74, 139, 184, 0.14);
+            --green-fade: rgba(135, 184, 143, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.09);
+            --bezier: cubic-bezier(0.22, 0.01, 0.28, 1);
+            --noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            --bg-gradient: linear-gradient(145deg, #0c0e13, #12161d);
+            --card-bg: rgba(242, 243, 247, 0.03);
+            --pin-color: #7a7d85;
+            --danger: #c44b3a;
+            --danger-fade: rgba(196, 75, 58, 0.12);
+        }
+
+        html.light {
+            --primary: #4A8BB8;
+            --secondary: #87B88F;
+            --warm-tint: #D8A979;
+            --text-main: #1a1f29;
+            --text-sub: #565b68;
+            --accent-fade: rgba(74, 139, 184, 0.14);
+            --green-fade: rgba(135, 184, 143, 0.12);
+            --border-fade: rgba(0, 0, 0, 0.11);
+            --bg-gradient: linear-gradient(145deg, #f8f8f6, #efefec);
+            --card-bg: rgba(26, 31, 41, 0.04);
+            --pin-color: #9a9da5;
+            --danger: #c44b3a;
+            --danger-fade: rgba(196, 75, 58, 0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+
+        body {
+            background-color: #f8f8f6;
+            background-image: var(--bg-gradient), var(--noise);
+            color: var(--text-main);
+            min-height: 100vh;
+            transition: background 0.34s var(--bezier), color 0.34s var(--bezier);
+            animation: pageIn 0.64s var(--bezier) forwards;
+            overflow-x: hidden;
+        }
+
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-exit {
+            animation: pageOut 0.48s var(--bezier) forwards;
+        }
+        @keyframes pageOut {
+            to { opacity: 0; transform: translateY(-18px) scale(0.97); }
+        }
+
+        /* ===== NAV ===== */
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            align-items: center;
+            padding: 1rem 3%;
+            border-bottom: 1px solid var(--border-fade);
+        }
+        .brand {
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: -0.02em;
+            margin-right: auto;
+        }
+        nav button, nav a {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-fade);
+            padding: 0.45rem 0.9rem;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: border-color 0.26s var(--bezier), background 0.26s var(--bezier), transform 0.2s var(--bezier);
+            white-space: nowrap;
+        }
+        nav button:hover, nav a:hover {
+            border-color: var(--primary);
+            background: var(--accent-fade);
+        }
+        nav button:active { transform: scale(0.96); }
+
+        /* ===== MAIN ===== */
+        main {
+            max-width: 900px;
+            margin: 2rem 3% 4rem auto;
+            padding: 0 1rem;
+        }
+
+        .page-header {
+            margin-bottom: 2.2rem;
+            position: relative;
+            padding-left: 1.2rem;
+        }
+        .page-header::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.25rem;
+            bottom: 0.25rem;
+            width: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+        .page-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+        }
+        .page-header .subtitle {
+            font-size: 0.88rem;
+            color: var(--text-sub);
+            margin-top: 0.35rem;
+            font-weight: 400;
+        }
+
+        /* ===== ARCHIVE CARD ===== */
+        .archive-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-fade);
+            border-radius: 5px;
+            padding: 1.6rem 1.4rem 1.2rem;
+            position: relative;
+            margin-bottom: 1.6rem;
+            transition: transform 0.34s var(--bezier), box-shadow 0.34s var(--bezier), border-color 0.26s var(--bezier);
+            backdrop-filter: blur(2px);
+        }
+        .archive-card::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 9px;
+            height: 9px;
+            background: var(--pin-color);
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.15);
+            opacity: 0.75;
+            transition: opacity 0.26s var(--bezier), background 0.26s var(--bezier);
+        }
+        .archive-card::after {
+            content: "";
+            position: absolute;
+            bottom: 10px;
+            left: 1.4rem;
+            right: 1.4rem;
+            height: 1px;
+            background: var(--border-fade);
+            opacity: 0.4;
+        }
+        .archive-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px) scale(1.005);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.1);
+        }
+        .archive-card:hover::before {
+            opacity: 1;
+            background: var(--warm-tint);
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-sub);
+            opacity: 0.7;
+            margin-top: 0.4rem;
+            margin-bottom: 1.2rem;
+        }
+
+        /* ===== FORM ===== */
+        input, textarea {
+            width: 100%;
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-fade);
+            border-radius: 4px;
+            padding: 0.65rem 0.8rem;
+            font-size: 0.95rem;
+            margin-bottom: 0.8rem;
+            transition: border-color 0.26s var(--bezier), background 0.26s var(--bezier);
+            outline: none;
+        }
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            background: var(--accent-fade);
+        }
+        input::placeholder, textarea::placeholder {
+            color: var(--text-sub);
+            opacity: 0.5;
+        }
+        textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
+
+        /* ===== ANON TOGGLE ===== */
+        .anon-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin: 0.4rem 0 1rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .anon-toggle input { display: none; }
+        .toggle-track {
+            width: 36px;
+            height: 20px;
+            background: var(--border-fade);
+            border-radius: 10px;
+            position: relative;
+            transition: background 0.26s var(--bezier);
+            flex-shrink: 0;
+        }
+        .toggle-track::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--text-main);
+            border-radius: 50%;
+            transition: transform 0.26s var(--bezier), background 0.26s var(--bezier);
+            opacity: 0.8;
+        }
+        .anon-toggle input:checked + .toggle-track {
+            background: var(--secondary);
+        }
+        .anon-toggle input:checked + .toggle-track::after {
+            transform: translateX(16px);
+            background: #fff;
+            opacity: 1;
+        }
+        .toggle-label {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            transition: color 0.26s var(--bezier);
+        }
+        .anon-toggle input:checked ~ .toggle-label {
+            color: var(--secondary);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0.55rem 1.2rem;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: background 0.26s var(--bezier), transform 0.2s var(--bezier);
+        }
+        .btn:hover { background: var(--secondary); }
+        .btn:active { transform: scale(0.96); }
+
+        /* ===== POST CARD ===== */
+        .post-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-fade);
+            border-radius: 5px;
+            padding: 1.5rem 1.3rem 1rem;
+            position: relative;
+            margin-bottom: 1.4rem;
+            transition: transform 0.34s var(--bezier), box-shadow 0.34s var(--bezier), border-color 0.26s var(--bezier);
+            backdrop-filter: blur(2px);
+        }
+        .post-card::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 9px;
+            height: 9px;
+            background: var(--pin-color);
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.15);
+            opacity: 0.75;
+            transition: opacity 0.26s var(--bezier), background 0.26s var(--bezier);
+        }
+        .post-card::after {
+            content: "";
+            position: absolute;
+            bottom: 10px;
+            left: 1.3rem;
+            right: 1.3rem;
+            height: 1px;
+            background: var(--border-fade);
+            opacity: 0.4;
+        }
+        .post-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px) scale(1.005);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.1);
+        }
+        .post-card:hover::before {
+            opacity: 1;
+            background: var(--warm-tint);
+        }
+
+        .post-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        .post-meta {
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            margin-bottom: 0.8rem;
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .post-meta .author {
+            color: var(--primary);
+            font-weight: 500;
+        }
+        .post-meta .anon-badge {
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            background: var(--border-fade);
+            border-radius: 3px;
+            color: var(--text-sub);
+            opacity: 0.8;
+        }
+        .post-content {
+            font-size: 0.92rem;
+            line-height: 1.7;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            background: transparent;
+            color: var(--text-sub);
+            border: 1px solid var(--border-fade);
+            padding: 0.35rem 0.7rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.26s var(--bezier);
+        }
+        .action-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--accent-fade);
+        }
+        .action-btn.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        .action-btn.danger:hover {
+            background: var(--danger-fade);
+        }
+
+        /* ===== REPLY BOX ===== */
+        .reply-box {
+            margin: 1rem 0 0.5rem;
+            padding: 1rem;
+            border: 1px dashed var(--border-fade);
+            border-radius: 4px;
+            display: none;
+            background: rgba(0,0,0,0.03);
+        }
+        .reply-box.show { display: block; }
+        .reply-box textarea {
+            margin-bottom: 0.6rem;
+            min-height: 70px;
+        }
+
+        /* ===== COMMENTS ===== */
+        .comment-area {
+            margin-top: 1rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border-fade);
+        }
+        .comment-item {
+            margin: 0.7rem 0 0 0;
+            padding: 0.7rem 0 0.7rem 1rem;
+            border-left: 2px solid var(--border-fade);
+            transition: border-color 0.26s var(--bezier);
+        }
+        .comment-item:hover {
+            border-left-color: var(--secondary);
+        }
+        .comment-meta {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            margin-bottom: 0.3rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .comment-meta .author {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+        .comment-content {
+            font-size: 0.88rem;
+            line-height: 1.6;
+            color: var(--text-main);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* ===== EMPTY TIP ===== */
+        .empty-tip {
+            text-align: left;
+            padding: 3rem 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            opacity: 0.7;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: #fff;
+            padding: 0.8rem 1.6rem;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s var(--bezier);
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; pointer-events: auto; }
+        .toast.error { background: var(--danger); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 640px) {
+            nav { padding: 0.8rem 2%; gap: 0.4rem; }
+            .brand { font-size: 1.15rem; }
+            nav button, nav a { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+            main { margin: 1.2rem 2% 3rem auto; padding: 0 0.5rem; }
+            .page-header { padding-left: 0.9rem; margin-bottom: 1.6rem; }
+            .page-header h2 { font-size: 1.25rem; }
+            .archive-card, .post-card { padding: 1.4rem 1.1rem 1rem; }
+            .post-content { font-size: 0.9rem; }
+            .comment-item { padding-left: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">S侦探社</div>
+        <button id="themeToggle">切换明暗</button>
+        <a href="dashboard.html">首页</a>
+        <a href="personal.html">个人中心</a>
+        <button id="logoutBtn">退出登录</button>
+    </nav>
+
+    <main>
+        <div class="page-header">
+            <h2>讨论版</h2>
+            <p class="subtitle">每一条线索都可能指向真相，也可能只是烟雾弹。</p>
+        </div>
+
+        <!-- 发布新帖 -->
+        <div class="archive-card">
+            <div class="card-title">新建线索 / New Lead</div>
+            <input id="postTitle" placeholder="线索标题">
+            <textarea id="postContent" placeholder="写下你发现的线索、疑问或推理..."></textarea>
+            <label class="anon-toggle">
+                <input type="checkbox" id="anonCheck">
+                <span class="toggle-track"></span>
+                <span class="toggle-label">匿名发布</span>
+            </label>
+            <button class="btn" id="sendPost">张贴线索</button>
+        </div>
+
+        <!-- 帖子列表 -->
+        <div id="postList"></div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ================== 主题切换 ==================
+        (function initTheme() {
+            const htmlRoot = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('site-theme');
+            if (saved === 'light') htmlRoot.classList.add('light');
+            themeBtn.addEventListener('click', function() {
+                htmlRoot.classList.toggle('light');
+                localStorage.setItem('site-theme', htmlRoot.classList.contains('light') ? 'light' : 'dark');
+            });
+        })();
+
+        // ================== 页面跳转动画 ==================
+        document.querySelectorAll('a').forEach(el => {
+            el.addEventListener('click', e => {
+                const targetHref = el.href;
+                e.preventDefault();
+                document.body.classList.add('page-exit');
+                setTimeout(() => location.href = targetHref, 440);
+            });
+        });
+
+        // ================== Toast ==================
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ================== Supabase 配置 ==================
+        const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+        const STORAGE_KEY = 'sb-auth-token-sdetective';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                storageKey: STORAGE_KEY
+            }
+        });
+        let myUid = null;
+        let isAdmin = false;
+        let nicknameMap = {}; // uid -> nickname cache
+
+        // ================== 退出登录 ==================
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            if (confirm("确定退出登录？")) {
+                await supabase.auth.signOut();
+                localStorage.removeItem(STORAGE_KEY);
+                location.href = "login.html";
+            }
+        });
+
+        // ================== 获取昵称（手动查询，不依赖外键） ==================
+        async function fetchNicknames(userIds) {
+            const uniqueIds = [...new Set(userIds)].filter(Boolean);
+            if (uniqueIds.length === 0) return;
+            const missing = uniqueIds.filter(id => !nicknameMap[id]);
+            if (missing.length === 0) return;
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('id, nickname')
+                    .in('id', missing);
+                if (error) { console.warn('读取昵称失败:', error.message); return; }
+                if (data) {
+                    data.forEach(p => { nicknameMap[p.id] = p.nickname || null; });
+                }
+            } catch (err) {
+                console.warn('读取昵称异常:', err.message);
+            }
+        }
+
+        function getNickname(uid, isAnon) {
+            if (isAnon) return "匿名侦探";
+            return nicknameMap[uid] || "未命名侦探";
+        }
+
+        // ================== 删除帖子 ==================
+        async function deletePost(postId) {
+            if (!confirm("确认删除该线索？其下全部回复会一并清除。")) return;
+            const { error } = await supabase
+                .from('forum_posts')
+                .delete()
+                .eq('id', postId);
+            if (error) {
+                showToast("删除失败：" + error.message, true);
+                return;
+            }
+            showToast("线索已删除");
+            loadPosts();
+        }
+
+        // ================== 加载帖子列表 ==================
+        async function loadPosts() {
+            // 1. 查帖子
+            const { data: posts, error: postErr } = await supabase
+                .from('forum_posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const wrap = document.getElementById('postList');
+            if (postErr) {
+                wrap.innerHTML = `<div class="empty-tip">读取线索失败：${escapeHtml(postErr.message)}</div>`;
+                return;
+            }
+            if (!posts || posts.length === 0) {
+                wrap.innerHTML = `<div class="empty-tip">板上还没有线索。你掌握的第一条情报，往往最关键。</div>`;
+                return;
+            }
+
+            // 2. 查所有评论
+            const postIds = posts.map(p => p.id);
+            let commentsMap = {}; // post_id -> [comments]
+            if (postIds.length > 0) {
+                const { data: comments, error: cmtErr } = await supabase
+                    .from('forum_comments')
+                    .select('*')
+                    .in('post_id', postIds)
+                    .order('created_at', { ascending: true });
+                if (!cmtErr && comments) {
+                    comments.forEach(c => {
+                        if (!commentsMap[c.post_id]) commentsMap[c.post_id] = [];
+                        commentsMap[c.post_id].push(c);
+                    });
+                }
+            }
+
+            // 3. 收集所有 user_id 查昵称
+            const allUserIds = [];
+            posts.forEach(p => allUserIds.push(p.user_id));
+            Object.values(commentsMap).flat().forEach(c => allUserIds.push(c.user_id));
+            await fetchNicknames(allUserIds);
+
+            // 4. 渲染
+            let html = '';
+            posts.forEach(p => {
+                const nick = getNickname(p.user_id, p.is_anonymous);
+                const showDelPost = (p.user_id === myUid || isAdmin)
+                    ? `<button class="action-btn danger del-post-btn" data-postid="${p.id}">删除</button>`
+                    : '';
+
+                let commentHtml = '';
+                const cmts = commentsMap[p.id] || [];
+                cmts.forEach(c => {
+                    const cNick = getNickname(c.user_id, c.is_anonymous);
+                    const showDelComment = (c.user_id === myUid || isAdmin)
+                        ? `<button class="action-btn danger del-comment-btn" data-cid="${c.id}">删除</button>`
+                        : '';
+                    commentHtml += `
+                    <div class="comment-item">
+                        <div class="comment-meta">
+                            <span class="author">${escapeHtml(cNick)}</span>
+                            <span>${new Date(c.created_at).toLocaleString('zh-CN')}</span>
+                            ${showDelComment}
+                        </div>
+                        <div class="comment-content">${escapeHtml(c.content)}</div>
+                    </div>`;
+                });
+
+                html += `
+                <div class="post-card" data-postid="${p.id}">
+                    <div class="post-title">${escapeHtml(p.title)}</div>
+                    <div class="post-meta">
+                        <span class="author">${escapeHtml(nick)}</span>
+                        ${p.is_anonymous ? '<span class="anon-badge">匿名</span>' : ''}
+                        <span>${new Date(p.created_at).toLocaleString('zh-CN')}</span>
+                        ${showDelPost}
+                    </div>
+                    <div class="post-content">${escapeHtml(p.content)}</div>
+                    <div class="post-actions">
+                        <button class="action-btn reply-btn" data-pid="${p.id}">回复</button>
+                    </div>
+                    <div class="reply-box" id="replybox-${p.id}">
+                        <label class="anon-toggle" style="margin-bottom:0.6rem;">
+                            <input type="checkbox" class="reply-anon-check" id="reply-anon-${p.id}">
+                            <span class="toggle-track"></span>
+                            <span class="toggle-label">匿名回复</span>
+                        </label>
+                        <textarea class="reply-input" placeholder="写下你的回复..."></textarea>
+                        <button class="btn send-reply" data-pid="${p.id}">发送回复</button>
+                    </div>
+                    <div class="comment-area">${commentHtml}</div>
+                </div>`;
+            });
+            wrap.innerHTML = html;
+
+            // 绑定事件
+            document.querySelectorAll('.del-post-btn').forEach(btn => {
+                btn.onclick = async function() { await deletePost(this.dataset.postid); };
+            });
+
+            document.querySelectorAll('.reply-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const box = document.getElementById(`replybox-${this.dataset.pid}`);
+                    box.classList.toggle('show');
+                };
+            });
+
+            document.querySelectorAll('.send-reply').forEach(btn => {
+                btn.onclick = async function() {
+                    const pid = this.dataset.pid;
+                    const box = document.getElementById(`replybox-${pid}`);
+                    const textarea = box.querySelector('.reply-input');
+                    const anonCheck = document.getElementById(`reply-anon-${pid}`);
+                    const content = textarea.value.trim();
+                    if (!content) { showToast("回复内容不能为空", true); return; }
+
+                    const payload = { post_id: pid, user_id: myUid, content: content };
+                    if (anonCheck && anonCheck.checked) payload.is_anonymous = true;
+
+                    const { error } = await supabase.from('forum_comments').insert(payload);
+                    if (error) {
+                        if (error.message && error.message.includes('is_anonymous')) {
+                            delete payload.is_anonymous;
+                            const { error: err2 } = await supabase.from('forum_comments').insert(payload);
+                            if (err2) { showToast("回复失败：" + err2.message, true); return; }
+                        } else {
+                            showToast("回复失败：" + error.message, true);
+                            return;
+                        }
+                    }
+                    showToast("回复已张贴");
+                    await loadPosts();
+                };
+            });
+
+            document.querySelectorAll('.del-comment-btn').forEach(btn => {
+                btn.onclick = async function() {
+                    if (!confirm("确定删除这条回复？")) return;
+                    const { error } = await supabase.from('forum_comments').delete().eq('id', this.dataset.cid);
+                    if (error) { showToast("删除失败", true); return; }
+                    await loadPosts();
+                };
+            });
+        }
+
+        // ================== 发布帖子 ==================
+        document.getElementById('sendPost').addEventListener('click', async function() {
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+            const isAnon = document.getElementById('anonCheck').checked;
+
+            if (!title || !content) { showToast('标题和内容不能为空', true); return; }
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { showToast("未登录", true); return; }
+
+            const payload = { user_id: user.id, title: title, content: content };
+            if (isAnon) payload.is_anonymous = true;
+
+            const { error } = await supabase.from('forum_posts').insert(payload);
+            if (error) {
+                if (error.message && error.message.includes('is_anonymous')) {
+                    delete payload.is_anonymous;
+                    const { error: err2 } = await supabase.from('forum_posts').insert(payload);
+                    if (err2) { showToast('发布失败：' + err2.message, true); return; }
+                    showToast('发布成功（匿名功能需数据库支持）');
+                } else {
+                    showToast('发布失败：' + error.message, true);
+                    return;
+                }
+            } else {
+                showToast('线索已张贴');
+            }
+
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+            document.getElementById('anonCheck').checked = false;
+            loadPosts();
+        });
+
+        // ================== 初始化 ==================
+        async function init() {
+            let waitCount = 0;
+            let session = null;
+            while (waitCount < 30) {
+                try {
+                    const res = await supabase.auth.getSession();
+                    session = res.data.session;
+                    if (session) break;
+                } catch (e) { console.warn("获取会话失败:", e); }
+                waitCount++;
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            if (!session) {
+      
