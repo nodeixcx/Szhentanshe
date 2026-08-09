@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜个人中心</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1"></script>
+    <style>
+        :root {
+            --primary: #4A8BB8;
+            --secondary: #87B88F;
+            --warm-tint: #D8A979;
+            --text-main: #f2f3f7;
+            --text-sub: #989ca8;
+            --accent-fade: rgba(74, 139, 184, 0.14);
+            --green-fade: rgba(135, 184, 143, 0.12);
+            --border-fade: rgba(255, 255, 255, 0.09);
+            --bezier: cubic-bezier(0.22, 0.01, 0.28, 1);
+            --noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            --bg-gradient: linear-gradient(145deg, #0c0e13, #12161d);
+            --card-bg: rgba(242, 243, 247, 0.03);
+            --pin-color: #7a7d85;
+        }
+
+        html.light {
+            --primary: #4A8BB8;
+            --secondary: #87B88F;
+            --warm-tint: #D8A979;
+            --text-main: #1a1f29;
+            --text-sub: #565b68;
+            --accent-fade: rgba(74, 139, 184, 0.14);
+            --green-fade: rgba(135, 184, 143, 0.12);
+            --border-fade: rgba(0, 0, 0, 0.11);
+            --bg-gradient: linear-gradient(145deg, #f8f8f6, #efefec);
+            --card-bg: rgba(26, 31, 41, 0.04);
+            --pin-color: #9a9da5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+
+        body {
+            background-color: #f8f8f6;
+            background-image: var(--bg-gradient), var(--noise);
+            color: var(--text-main);
+            min-height: 100vh;
+            transition: background 0.34s var(--bezier), color 0.34s var(--bezier);
+            animation: pageIn 0.64s var(--bezier) forwards;
+            overflow-x: hidden;
+        }
+
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-exit {
+            animation: pageOut 0.48s var(--bezier) forwards;
+        }
+        @keyframes pageOut {
+            to { opacity: 0; transform: translateY(-18px) scale(0.97); }
+        }
+
+        /* ===== NAV ===== */
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            align-items: center;
+            padding: 1rem 3%;
+            border-bottom: 1px solid var(--border-fade);
+        }
+        .brand {
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: -0.02em;
+            margin-right: auto;
+        }
+        nav button, nav a {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-fade);
+            padding: 0.45rem 0.9rem;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: border-color 0.26s var(--bezier), background 0.26s var(--bezier), transform 0.2s var(--bezier);
+            white-space: nowrap;
+        }
+        nav button:hover, nav a:hover {
+            border-color: var(--primary);
+            background: var(--accent-fade);
+        }
+        nav button:active { transform: scale(0.96); }
+
+        /* ===== MAIN ===== */
+        main {
+            max-width: 900px;
+            margin: 2rem 3% 4rem auto;
+            padding: 0 1rem;
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            margin-bottom: 2.2rem;
+            position: relative;
+            padding-left: 1.2rem;
+        }
+        .page-header::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.25rem;
+            bottom: 0.25rem;
+            width: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+        .page-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+        }
+        .page-header .subtitle {
+            font-size: 0.88rem;
+            color: var(--text-sub);
+            margin-top: 0.35rem;
+            font-weight: 400;
+        }
+
+        /* ===== ARCHIVE CARD (Identity dossier) ===== */
+        .archive-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-fade);
+            border-radius: 5px;
+            padding: 1.8rem 1.5rem 1.3rem;
+            position: relative;
+            margin-bottom: 1.8rem;
+            transition: transform 0.34s var(--bezier), box-shadow 0.34s var(--bezier), border-color 0.26s var(--bezier);
+            backdrop-filter: blur(2px);
+            transform: rotate(-0.4deg);
+        }
+        .archive-card::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 9px;
+            height: 9px;
+            background: var(--pin-color);
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.15);
+            opacity: 0.75;
+            transition: opacity 0.26s var(--bezier), background 0.26s var(--bezier);
+        }
+        .archive-card::after {
+            content: "";
+            position: absolute;
+            bottom: 10px;
+            left: 1.5rem;
+            right: 1.5rem;
+            height: 1px;
+            background: var(--border-fade);
+            opacity: 0.4;
+        }
+        .archive-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px) rotate(0deg) scale(1.01);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.1);
+        }
+        .archive-card:hover::before {
+            opacity: 1;
+            background: var(--warm-tint);
+        }
+
+        .archive-card .card-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-sub);
+            opacity: 0.7;
+            margin-top: 0.4rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .field {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+            padding: 0.55rem 0;
+            border-bottom: 1px dashed var(--border-fade);
+        }
+        .field:last-of-type {
+            border-bottom: none;
+        }
+        .field .label {
+            font-size: 0.82rem;
+            color: var(--text-sub);
+            min-width: 5rem;
+            flex-shrink: 0;
+            opacity: 0.8;
+        }
+        .field .value {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            word-break: break-all;
+            font-family: "SF Mono", "Consolas", monospace;
+            letter-spacing: -0.01em;
+        }
+        .field .value.muted {
+            color: var(--text-sub);
+            font-style: italic;
+        }
+
+        /* ===== EDIT SECTION ===== */
+        .edit-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-fade);
+            border-radius: 5px;
+            padding: 1.6rem 1.5rem 1.2rem;
+            position: relative;
+            margin-bottom: 1.8rem;
+            transition: transform 0.34s var(--bezier), box-shadow 0.34s var(--bezier), border-color 0.26s var(--bezier);
+            backdrop-filter: blur(2px);
+            transform: rotate(0.3deg);
+        }
+        .edit-section::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 9px;
+            height: 9px;
+            background: var(--pin-color);
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.15);
+            opacity: 0.75;
+            transition: opacity 0.26s var(--bezier), background 0.26s var(--bezier);
+        }
+        .edit-section::after {
+            content: "";
+            position: absolute;
+            bottom: 10px;
+            left: 1.5rem;
+            right: 1.5rem;
+            height: 1px;
+            background: var(--border-fade);
+            opacity: 0.4;
+        }
+        .edit-section:hover {
+            border-color: var(--secondary);
+            transform: translateY(-3px) rotate(0deg) scale(1.01);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.1);
+        }
+        .edit-section:hover::before {
+            opacity: 1;
+            background: var(--warm-tint);
+        }
+
+        .edit-section .card-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-sub);
+            opacity: 0.7;
+            margin-top: 0.4rem;
+            margin-bottom: 1.2rem;
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-fade);
+            border-radius: 4px;
+            padding: 0.65rem 0.8rem;
+            font-size: 0.95rem;
+            margin: 0.4rem 0 0.8rem;
+            transition: border-color 0.26s var(--bezier), background 0.26s var(--bezier);
+            outline: none;
+        }
+        input:focus {
+            border-color: var(--primary);
+            background: var(--accent-fade);
+        }
+        input::placeholder {
+            color: var(--text-sub);
+            opacity: 0.5;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0.55rem 1.2rem;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: background 0.26s var(--bezier), transform 0.2s var(--bezier);
+        }
+        .btn:hover {
+            background: var(--secondary);
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-check {
+            background: transparent;
+            color: var(--text-sub);
+            border: 1px dashed var(--border-fade);
+            padding: 0.5rem 1.2rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.26s var(--bezier);
+            margin-bottom: 1.2rem;
+        }
+        .btn-check:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--accent-fade);
+        }
+
+        /* ===== SYSTEM LOG (Debug panel) ===== */
+        .log-section {
+            margin-top: 2rem;
+        }
+        .log-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 0.6rem;
+            opacity: 0.6;
+            transition: opacity 0.26s var(--bezier);
+        }
+        .log-toggle:hover { opacity: 1; }
+        .log-toggle .indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-sub);
+            transition: background 0.26s var(--bezier);
+        }
+        .log-toggle.active .indicator {
+            background: var(--primary);
+        }
+        .log-box {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-fade);
+            border-radius: 4px;
+            padding: 0.8rem 1rem;
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            font-family: "SF Mono", "Consolas", monospace;
+            line-height: 1.7;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.4s var(--bezier), opacity 0.3s var(--bezier), padding 0.3s var(--bezier);
+        }
+        .log-box.open {
+            max-height: 300px;
+            opacity: 1;
+            overflow-y: auto;
+            padding: 0.8rem 1rem;
+        }
+        .log-box .err { color: #c44b3a; }
+        .log-box .ok { color: var(--secondary); }
+        .log-box .warn { color: var(--warm-tint); }
+        .log-box .info { color: var(--text-sub); }
+        .log-box .line {
+            border-bottom: 1px dashed rgba(255,255,255,0.05);
+            padding: 0.15rem 0;
+        }
+        .log-box .line:last-child { border-bottom: none; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: #fff;
+            padding: 0.8rem 1.6rem;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s var(--bezier);
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; pointer-events: auto; }
+        .toast.error { background: #c44b3a; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 640px) {
+            nav { padding: 0.8rem 2%; gap: 0.4rem; }
+            .brand { font-size: 1.15rem; }
+            nav button, nav a { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+            main { margin: 1.2rem 2% 3rem auto; padding: 0 0.5rem; }
+            .page-header { padding-left: 0.9rem; margin-bottom: 1.6rem; }
+            .page-header h2 { font-size: 1.25rem; }
+            .archive-card, .edit-section {
+                padding: 1.5rem 1.1rem 1.1rem;
+                transform: none !important;
+            }
+            .archive-card:hover, .edit-section:hover {
+                transform: translateY(-2px) scale(1.005) !important;
+            }
+            .field { flex-direction: column; gap: 0.2rem; padding: 0.5rem 0; }
+            .field .label { min-width: auto; font-size: 0.78rem; }
+            .field .value { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">S侦探社</div>
+        <button id="themeToggle">切换明暗</button>
+        <a href="dashboard.html">首页</a>
+        <a href="forum.html">论坛</a>
+        <button id="logoutBtn">退出登录</button>
+    </nav>
+
+    <main>
+        <div class="page-header">
+            <h2>个人中心</h2>
+            <p class="subtitle">你的档案袋里装着什么，只有你自己知道。</p>
+        </div>
+
+        <!-- 身份档案卡 -->
+        <div class="archive-card">
+            <div class="card-title">身份档案 / Identity Dossier</div>
+            <div class="field">
+                <span class="label">档案编号</span>
+                <span class="value muted" id="uid">待核验</span>
+            </div>
+            <div class="field">
+                <span class="label">联络邮箱</span>
+                <span class="value muted" id="email">待核验</span>
+            </div>
+            <div class="field">
+                <span class="label">建档时间</span>
+                <span class="value muted" id="createdAt">待核验</span>
+            </div>
+        </div>
+
+        <!-- 编辑档案 -->
+        <div class="edit-section">
+            <div class="card-title">档案编辑 / Edit Record</div>
+            <div class="field" style="border-bottom:none; padding:0;">
+                <span class="label">代号</span>
+            </div>
+            <input id="nickInput" placeholder="输入你在社内的代号">
+            <button class="btn" id="saveNick">保存代号</button>
+        </div>
+
+        <!-- 系统日志 -->
+        <div class="log-section">
+            <div class="log-toggle" id="logToggle">
+                <span class="indicator"></span>
+                <span>系统日志</span>
+            </div>
+            <div class="log-box" id="logBox">
+                <div class="line info">SDK 已就绪，等待指令。</div>
+            </div>
+            <button class="btn-check" id="checkBtn">检查登录状态</button>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ================== 主题切换 ==================
+        (function initTheme() {
+            const htmlRoot = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('site-theme');
+            if (saved === 'light') htmlRoot.classList.add('light');
+            themeBtn.addEventListener('click', function() {
+                htmlRoot.classList.toggle('light');
+                localStorage.setItem('site-theme', htmlRoot.classList.contains('light') ? 'light' : 'dark');
+            });
+        })();
+
+        // ================== 页面跳转动画 ==================
+        document.querySelectorAll('a').forEach(el => {
+            el.addEventListener('click', e => {
+                const targetHref = el.href;
+                e.preventDefault();
+                document.body.classList.add('page-exit');
+                setTimeout(() => location.href = targetHref, 440);
+            });
+        });
+
+        // ================== Toast提示 ==================
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        // ================== 系统日志 ==================
+        const logBox = document.getElementById('logBox');
+        const logToggle = document.getElementById('logToggle');
+        let logOpen = false;
+
+        logToggle.addEventListener('click', () => {
+            logOpen = !logOpen;
+            logBox.classList.toggle('open', logOpen);
+            logToggle.classList.toggle('active', logOpen);
+        });
+
+        function logToBox(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+            const div = document.createElement('div');
+            div.className = 'line ' + type;
+            div.textContent = `[${time}] ${msg}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+            // Auto-open on new log
+            if (!logOpen) {
+                logOpen = true;
+                logBox.classList.add('open');
+                logToggle.classList.add('active');
+            }
+        }
+
+        // ================== Supabase 配置 ==================
+        const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+        const STORAGE_KEY = 'sb-auth-token-sdetective';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                storageKey: STORAGE_KEY
+            }
+        });
+
+        // ================== 检查登录状态 ==================
+        async function checkLogin() {
+            logToBox('开始核验身份...', 'info');
+            const token = localStorage.getItem(STORAGE_KEY);
+            logToBox(`localStorage token ${token ? '已存在' : '未找到'}`, token ? 'ok' : 'warn');
+
+            try {
+                const { data, error } = await supabase.auth.getSession();
+                if (error) {
+                    logToBox('核验出错: ' + error.message, 'err');
+                    return;
+                }
+                const session = data.session;
+                if (session) {
+                    logToBox('身份核验通过', 'ok');
+                    logToBox(`邮箱: ${session.user.email}`, 'ok');
+                    document.getElementById('uid').textContent = session.user.id;
+                    document.getElementById('email').textContent = session.user.email;
+                    document.getElementById('createdAt').textContent = new Date(session.user.created_at).toLocaleString('zh-CN');
+                    document.getElementById('uid').classList.remove('muted');
+                    document.getElementById('email').classList.remove('muted');
+                    document.getElementById('createdAt').classList.remove('muted');
+
+                    // 读取昵称
+                    try {
+                        const { data: prof, error: profErr } = await supabase
+                            .from('profiles')
+                            .select('nickname')
+                            .eq('id', session.user.id)
+                            .single();
+                        if (profErr) {
+                            logToBox('读取代号记录出错: ' + profErr.message, 'warn');
+                        } else if (prof) {
+                            logToBox(`代号: ${prof.nickname || '(未设置)'}`, 'ok');
+                            document.getElementById('nickInput').value = prof.nickname || '';
+                        } else {
+                            logToBox('档案库中无该记录', 'warn');
+                        }
+                    } catch (err) {
+                        logToBox('读取代号异常: ' + err.message, 'err');
+                    }
+                } else {
+                    logToBox('未获取到有效会话', 'err');
+                }
+            } catch (err) {
+                logToBox('核验异常: ' + err.message, 'err');
+            }
+            logToBox('核验结束', 'info');
+        }
+
+        // ================== 退出登录 ==================
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            if (confirm("确定退出登录？")) {
+                await supabase.auth.signOut();
+                localStorage.removeItem(STORAGE_KEY);
+                showToast('已退出');
+                setTimeout(() => location.href = "login.html", 500);
+            }
+        });
+
+        // ================== 保存昵称 ==================
+        document.getElementById('saveNick').addEventListener('click', async function() {
+            const nick = document.getElementById('nickInput').value.trim();
+            if (!nick) { showToast("代号不能为空", true); return; }
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { showToast("未登录", true); return; }
+            const { error } = await supabase.from('profiles').update({ nickname: nick }).eq('id', user.id);
+            if (error) { showToast("保存失败：" + error.message, true); return; }
+            showToast("代号已更新");
+            logToBox('代号更新成功', 'ok');
+        });
+
+        // 绑定检测按钮
+        document.getElementById('checkBtn').addEventListener('click', checkLogin);
+
+        // 会话监听
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                logToBox('会话已退出', 'err');
+                showToast('已退出登录', true);
+            }
+        });
+    </script>
+</body>
+  </html>
