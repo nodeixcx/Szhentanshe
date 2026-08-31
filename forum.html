@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜论坛</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        :root {
+            --bg-primary: #121519;
+            --bg-gradient-1:#14181c;
+            --bg-gradient-2:#1b2227;
+            --text-main: #e8ebf0;
+            --text-sub: #949ba7;
+            --accent-blue: #4A8BB8;
+            --accent-green: #87B88F;
+            --border-fade: rgba(255,255,255,0.07);
+            --cubic: cubic‑bezier(0.22, 1, 0.36, 1);
+        }
+        html.light{
+            --bg-primary:#f7f7f4;
+            --bg-gradient-1:#fcfaf6;
+            --bg-gradient-2:#f3efe9;
+            --text-main:#22262b;
+            --text-sub:#666b75;
+            --border-fade:rgba(0,0,0,0.08);
+        }
+        body{
+            min-height:100vh;
+            background: linear-gradient(145deg, var(--bg-gradient-1), var(--bg-gradient-2));
+            background-image: 
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.045'/%3E%3C/svg%3E"),
+                linear-gradient(145deg, var(--bg-gradient-1), var(--bg-gradient-2));
+            color:var(--text-main);
+            opacity:0;
+            transform:translateY(22px) scale(0.97);
+            transition: opacity 0.6s var(--cubic), transform 0.6s var(--cubic);
+        }
+        body.ready{
+            opacity:1;
+            transform:translateY(0) scale(1);
+        }
+        header{
+            padding:1.4rem 3%;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            border-bottom:1px solid var(--border-fade);
+        }
+        .nav a{
+            color:var(--text-sub);
+            text-decoration:none;
+            margin-right:1.2rem;
+        }
+        .nav a.active{
+            color:var(--accent-blue);
+        }
+        main{
+            margin:3rem 3% 3rem auto;
+            max-width:920px;
+        }
+        .post-form{
+            padding:1.6rem;
+            border:1px solid var(--border-fade);
+            border-radius:6px;
+            margin-bottom:2.4rem;
+        }
+        input,textarea{
+            width:100%;
+            background:transparent;
+            border:1px solid var(--border-fade);
+            color:var(--text-main);
+            padding:0.7rem;
+            border-radius:4px;
+            margin-bottom:0.8rem;
+        }
+        button{
+            padding:0.6rem 1.2rem;
+            border:none;
+            border-radius:4px;
+            background:var(--accent-blue);
+            color:#fff;
+            cursor:pointer;
+        }
+        .post-item{
+            padding:1.4rem;
+            border:1px solid var(--border-fade);
+            border-radius:6px;
+            margin-bottom:1.2rem;
+        }
+        .post-title{
+            font-size:1.1rem;
+            margin-bottom:0.5rem;
+            color:var(--accent-blue);
+        }
+        .post-time{
+            font-size:0.82rem;
+            color:var(--text-sub);
+            margin-bottom:0.7rem;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div><strong>S侦探社</strong></div>
+    <div class="nav">
+        <a href="index.html">首页</a>
+        <a href="dashboard.html">主页</a>
+        <a href="personal.html">个人中心</a>
+        <a href="forum.html" class="active">论坛</a>
+        <button id="themeBtn">明暗切换</button>
+        <button id="logoutBtn">退出</button>
+    </div>
+</header>
+<main>
+    <div class="post-form">
+        <h3>发布新帖</h3>
+        <input type="text" id="title" placeholder="标题">
+        <textarea id="content" rows="4" placeholder="写下内容"></textarea>
+        <button id="submitPost">发布</button>
+    </div>
+    <div id="postList"></div>
+</main>
+
+<script>
+const supabaseUrl = "你的url";
+const supabaseKey = "你的key";
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// 主题读取
+if(localStorage.getItem("theme")==="light") document.documentElement.classList.add("light");
+document.getElementById("themeBtn").onclick=()=>{
+    document.documentElement.classList.toggle("light");
+    localStorage.setItem("theme", document.documentElement.classList.contains("light")?"light":"dark");
+};
+
+//入场动画
+window.addEventListener('load',()=>document.body.classList.add('ready'));
+
+//鉴权，和其他页面统一逻辑
+async function checkAuth(){
+    const {data:{session}} = await supabase.auth.getSession();
+    if(!session){
+        location.replace("login.html");
+    }
+}
+checkAuth();
+
+//加载帖子
+async function loadPosts(){
+    const {data} = await supabase.from("forum_posts").select("*,profiles(email:user_id)").order("created_at",{ascending:false});
+    const wrap = document.getElementById("postList");
+    wrap.innerHTML="";
+    if(!data) return;
+    data.forEach(p=>{
+        wrap.innerHTML+=`
+        <div class="post-item">
+            <div class="post-title">${p.title}</div>
+            <div class="post-time">${new Date(p.created_at).toLocaleString()}</div>
+            <div>${p.content}</div>
+        </div>`
+    })
+}
+loadPosts();
+
+//发帖
+document.getElementById("submitPost").onclick = async ()=>{
+    const title = document.getElementById("title").value.trim();
+    const content = document.getElementById("content").value.trim();
+    if(!title||!content)return;
+    const {data:{user}} = await supabase.auth.getUser();
+    await supabase.from("forum_posts").insert({
+        user_id:user.id,
+        title,content
+    })
+    document.getElementById("title").value="";
+    document.getElementById("content").value="";
+    loadPosts();
+}
+
+//退出登录
+document.getElementById("logoutBtn").onclick = async ()=>{
+    await supabase.auth.signOut();
+    location.replace("login.html");
+}
+</script>
+</body>
+</html>
