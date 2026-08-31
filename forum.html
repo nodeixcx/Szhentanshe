@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S侦探社｜论坛</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        :root {
+            --bg-primary: #12161a;
+            --text-main: #e8ecef;
+            --text-sub: #949ca6;
+            --accent-blue: #4A8BB8;
+            --accent-green: #87B88F;
+            --accent-fade: rgba(74, 139, 184, 0.14);
+            --border-fade: rgba(255,255,255,0.09);
+        }
+
+        html.light {
+            --bg-primary: #f7f7f2;
+            --text-main: #22272b;
+            --text-sub: #60666c;
+            --accent-fade: rgba(74, 139, 184, 0.08);
+            --border-fade: rgba(0,0,0,0.11);
+        }
+
+        body {
+            min-height: 100vh;
+            /* 渐变+噪点 禁止纯平背景 */
+            background-image: 
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+                linear-gradient(135deg, var(--bg-primary), #1a2026);
+            color: var(--text-main);
+            transition: background 0.32s cubic‑bezier(0.25,0.4,0.25,1);
+            overflow‑x: hidden;
+        }
+        html.light body {
+            background-image: 
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E"),
+                linear-gradient(135deg, #f7f7f2, #ebebe4);
+        }
+
+        /* 页面入场动画：从底部上浮淡入 */
+        .page‑wrap {
+            min‑height: 100vh;
+            opacity: 0;
+            transform: translateY(26px);
+            animation: pageIn 0.46s cubic‑bezier(0.18, 0.6, 0.22, 1) forwards;
+        }
+        @keyframes pageIn {
+            to { opacity:1; transform: translateY(0); }
+        }
+        .page‑wrap.exit {
+            animation: pageOut 0.38s cubic‑bezier(0.7,0,0.84,0) forwards;
+        }
+        @keyframes pageOut {
+            to { opacity:0; transform: translateY(-32px) scale(0.97); }
+        }
+
+        header {
+            padding: 1.4rem 4% 1.4rem 3%;
+            display: flex;
+            justify‑content: space‑between;
+            align‑items: center;
+            border‑bottom: 1px solid var(--border‑fade);
+        }
+        .logo‑text {
+            font‑size: 1.22rem;
+            font‑weight: 500;
+            color: var(--accent‑blue);
+        }
+        .header‑btns {
+            display: flex;
+            gap: 0.75rem;
+            align‑items: center;
+        }
+
+        button {
+            background: var(--accent‑fade);
+            color: var(--text‑main);
+            border: 1px solid var(--border‑fade);
+            padding: 0.52rem 0.95rem;
+            font‑size: 0.92rem;
+            cursor: pointer;
+            border‑radius: 4px;
+            transition: 0.24s cubic‑bezier(0.22,0.4,0.2,1);
+        }
+        button:hover {
+            background: rgba(74,139,184,0.22);
+        }
+        .btn‑green:hover {
+            background: rgba(135,184,143,0.24);
+        }
+
+        main {
+            margin: 2.8rem 4% 3rem auto;
+            max‑width: 920px;
+            /* 不对称布局，右边留白更大，不完美居中 */
+        }
+
+        .post‑form {
+            border:1px solid var(--border‑fade);
+            padding:1.4rem;
+            border‑radius:5px;
+            margin‑bottom:2.4rem;
+            background: var(--accent‑fade);
+        }
+        .post‑form h3 {
+            margin‑bottom:1rem;
+            font‑weight:500;
+        }
+        input, textarea {
+            width:100%;
+            background: rgba(0,0,0,0.16);
+            border:1px solid var(--border‑fade);
+            color:var(--text‑main);
+            padding:0.7rem;
+            margin‑bottom:0.9rem;
+            border‑radius:4px;
+            font‑size:0.94rem;
+        }
+        html.light input, html.light textarea {
+            background: rgba(255,255,255,0.65);
+        }
+        textarea {
+            min‑height:110px;
+            resize: vertical;
+        }
+
+        .post‑item {
+            border:1px solid var(--border‑fade);
+            padding:1.2rem;
+            margin‑bottom:1.2rem;
+            border‑radius:5px;
+            background: var(--accent‑fade);
+        }
+        .post‑title {
+            font‑size:1.1rem;
+            margin‑bottom:0.5rem;
+            font‑weight:500;
+        }
+        .post‑meta {
+            font‑size:0.82rem;
+            color:var(--text‑sub);
+            margin‑bottom:0.7rem;
+        }
+        .post‑content {
+            line‑height:1.62;
+            margin‑bottom:0.8rem;
+        }
+        .post‑img {
+            max‑width:100%;
+            border‑radius:4px;
+            margin‑top:0.4rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom:24px;
+            left:3%;
+            padding:0.75rem 1.1rem;
+            background:#1c242b;
+            color:#fff;
+            border‑radius:4px;
+            border:1px solid var(--border‑fade);
+            opacity:0;
+            transform: translateY(14px);
+            transition: 0.28s cubic‑bezier(0.22,0.4,0.2,1);
+            z‑index:999;
+        }
+        .toast.show {
+            opacity:1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+<div class="page‑wrap" id="pageWrap">
+    <header>
+        <div class="logo‑text">S侦探社｜论坛</div>
+        <div class="header‑btns">
+            <button id="themeBtn">切换明暗</button>
+            <button id="goIndex">首页</button>
+            <button id="goDashboard">管理员基地</button>
+            <button id="goPersonal">个人中心</button>
+            <button id="logoutBtn">退出登录</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="post‑form">
+            <h3>发布帖子</h3>
+            <input id="postTitle" placeholder="帖子标题">
+            <textarea id="postContent" placeholder="写下你的内容"></textarea>
+            <input id="postImgUrl" placeholder="图片链接（选填）">
+            <button id="submitPost" class="btn‑green">发布帖子</button>
+        </div>
+
+        <div id="postList"></div>
+    </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== 这里替换成你自己的supabase key ==========
+const SUPABASE_URL = "你的url";
+const SUPABASE_ANON_KEY = "你的anon key";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const pageWrap = document.getElementById('pageWrap');
+const toastEl = document.getElementById('toast');
+const themeBtn = document.getElementById('themeBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const goIndex = document.getElementById('goIndex');
+const goDashboard = document.getElementById('goDashboard');
+const goPersonal = document.getElementById('goPersonal');
+const postTitle = document.getElementById('postTitle');
+const postContent = document.getElementById('postContent');
+const postImgUrl = document.getElementById('postImgUrl');
+const submitPost = document.getElementById('submitPost');
+const postList = document.getElementById('postList');
+
+function showToast(msg, isErr=false){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if(isErr) toastEl.style.borderColor="#c76464";
+    setTimeout(()=>{
+        toastEl.classList.remove('show');
+        toastEl.style.borderColor="var(--border-fade)";
+    },2200);
+}
+
+// 主题
+function loadTheme(){
+    const t = localStorage.getItem("theme");
+    if(t==="light") document.documentElement.classList.add("light");
+}
+themeBtn.addEventListener('click',()=>{
+    document.documentElement.classList.toggle("light");
+    const isLight = document.documentElement.classList.contains("light");
+    localStorage.setItem("theme", isLight ? "light":"dark");
+});
+
+// 页面跳转带动画
+function goPage(href){
+    pageWrap.classList.add('exit');
+    setTimeout(()=> location.href=href, 380);
+}
+goIndex.onclick = ()=> goPage("index.html");
+goDashboard.onclick = ()=> goPage("dashboard.html");
+goPersonal.onclick = ()=> goPage("personal.html");
+
+// 鉴权，和个人中心完全一套逻辑
+async function checkAuth(){
+    const {data:{session}} = await supabase.auth.getSession();
+    if(!session){
+        goPage("login.html");
+        return false;
+    }
+    return true;
+}
+
+// 退出
+logoutBtn.onclick = async ()=>{
+    await supabase.auth.signOut();
+    goPage("login.html");
+}
+
+// 加载帖子
+async function loadPosts(){
+    const ok = await checkAuth();
+    if(!ok) return;
+    const {data,error} = await supabase.from("forum").select("*").order("created_at",{ascending:false});
+    if(error){
+        showToast("读取帖子失败："+error.message,true);
+        return;
+    }
+    postList.innerHTML = "";
+    data.forEach(p=>{
+        const div = document.createElement("div");
+        div.className="post‑item";
+        div.innerHTML = `
+            <div class="post‑title">${escapeHtml(p.title||"无标题")}</div>
+            <div class="post‑meta">${new Date(p.created_at).toLocaleString()}</div>
+            <div class="post‑content">${escapeHtml(p.content||"")}</div>
+            ${p.image_url ? `<img class="post‑img" src="${escapeHtml(p.image_url)}">` : ""}
+        `;
+        postList.appendChild(div);
+    })
+}
+
+function escapeHtml(str){
+    if(!str) return "";
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// 发帖子
+submitPost.onclick = async ()=>{
+    const ok = await checkAuth();
+    if(!ok) return;
+    const title = postTitle.value.trim();
+    const content = postContent.value.trim();
+    const img = postImgUrl.value.trim();
+    if(!title||!content){
+        showToast("标题和内容不能为空",true);
+        return;
+    }
+    const user = (await supabase.auth.getUser()).data.user;
+    const {error} = await supabase.from("forum").insert([{
+        title,
+        content,
+        image_url: img||null,
+        user_id: user.id
+    }])
+    if(error){
+        showToast("发布失败："+error.message,true);
+        return;
+    }
+    showToast("发布成功");
+    postTitle.value="";postContent.value="";postImgUrl.value="";
+    loadPosts();
+}
+
+// 初始化
+(async function init(){
+    loadTheme();
+    await checkAuth();
+    loadPosts();
+})();
+</script>
+</body>
+  </html>
