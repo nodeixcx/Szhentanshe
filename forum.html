@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+ <html lang="zh-CN">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>S侦探社｜论坛</title>
+     <style>
+         :root {
+             --primary: #4A8BB8;
+             --secondary: #87B88F;
+             --warm-tint: #D8A979;
+             --text-main: #f2f3f7;
+             --text-sub: #989ca8;
+             --accent-fade: rgba(74, 139, 184, 0.14);
+             --green-fade: rgba(135, 184, 143, 0.12);
+             --border-fade: rgba(255, 255, 255, 0.09);
+             --bezier: cubic-bezier(0.22, 0.01, 0.28, 1);
+             --noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+             --bg-gradient: linear-gradient(145deg, #0c0e13, #12161d);
+             --card-bg: rgba(242, 243, 247, 0.03);
+         }
+         html.light {
+             --primary: #4A8BB8;
+             --secondary: #87B88F;
+             --warm-tint: #D8A979;
+             --text-main: #1a1f29;
+             --text-sub: #565b68;
+             --accent-fade: rgba(74, 139, 184, 0.14);
+             --green-fade: rgba(135, 184, 143, 0.12);
+             --border-fade: rgba(0, 0, 0, 0.11);
+             --bg-gradient: linear-gradient(145deg, #f8f8f6, #efefec);
+             --card-bg: rgba(26, 31, 41, 0.04);
+         }
+         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+         body {
+             background-image: var(--bg-gradient), var(--noise);
+             color: var(--text-main);
+             min-height: 100vh;
+             transition: background 0.34s var(--bezier), color 0.34s var(--bezier);
+             animation: pageIn 0.64s var(--bezier) forwards;
+             overflow-x: hidden;
+         }
+         @keyframes pageIn {
+             from { opacity: 0; transform: translateY(24px); }
+             to { opacity: 1; transform: translateY(0); }
+         }
+         .page-exit {
+             animation: pageOut 0.48s var(--bezier) forwards;
+         }
+         @keyframes pageOut {
+             to { opacity: 0; transform: translateY(-18px) scale(0.97); }
+         }
+         nav {
+             display: flex;
+             flex-wrap: wrap;
+             gap: 0.6rem;
+             align-items: center;
+             padding: 1rem 3%;
+             border-bottom: 1px solid var(--border-fade);
+         }
+         .brand {
+             font-size: 1.3rem;
+             font-weight: bold;
+             letter-spacing: -0.02em;
+             margin-right: auto;
+         }
+         nav button, nav a {
+             background: transparent;
+             color: var(--text-main);
+             border: 1px solid var(--border-fade);
+             padding: 0.45rem 0.9rem;
+             border-radius: 4px;
+             text-decoration: none;
+             cursor: pointer;
+             font-size: 0.85rem;
+             transition: border-color 0.26s var(--bezier), background 0.26s var(--bezier), transform 0.2s var(--bezier);
+             white-space: nowrap;
+         }
+         nav button:hover, nav a:hover {
+             border-color: var(--primary);
+             background: var(--accent-fade);
+         }
+         nav button:active { transform: scale(0.96); }
+         nav a.active {
+             border-color: var(--primary);
+             background: var(--accent-fade);
+         }
+         main {
+             max-width: 920px;
+             margin: 2rem 3% 4rem auto;
+             padding: 0 1rem;
+         }
+         .page-header {
+             margin-bottom: 2.2rem;
+             position: relative;
+             padding-left: 1.2rem;
+         }
+         .page-header::before {
+             content: "";
+             position: absolute;
+             left: 0;
+             top: 0.25rem;
+             bottom: 0.25rem;
+             width: 3px;
+             background: var(--primary);
+             border-radius: 2px;
+             opacity: 0.6;
+         }
+         .page-header h2 {
+             font-size: 1.5rem;
+             font-weight: 600;
+             letter-spacing: -0.01em;
+             line-height: 1.3;
+         }
+         .page-header .subtitle {
+             font-size: 0.88rem;
+             color: var(--text-sub);
+             margin-top: 0.35rem;
+             font-weight: 400;
+         }
+         .post-form-card {
+             background: var(--card-bg);
+             border: 1px solid var(--border-fade);
+             border-radius: 5px;
+             padding:1.6rem 1.5rem;
+             margin-bottom:2rem;
+         }
+         .post-form-card h3 {
+             font-size:1.05rem;
+             margin-bottom:1rem;
+         }
+         input,textarea {
+             width:100%;
+             background:transparent;
+             color:var(--text-main);
+             border:1px solid var(--border-fade);
+             border-radius:4px;
+             padding:0.7rem 0.8rem;
+             margin-bottom:0.9rem;
+             font-size:0.95rem;
+             outline:none;
+             transition: border-color 0.26s var(--bezier), background 0.26s var(--bezier);
+         }
+         input:focus,textarea:focus{
+             border-color:var(--primary);
+             background:var(--accent-fade);
+         }
+         textarea{
+             min-height:120px;
+             resize:vertical;
+         }
+         .check-row{
+             display:flex;
+             gap:0.4rem;
+             align-items:center;
+             margin-bottom:1rem;
+         }
+         .btn {
+             background: var(--primary);
+             color: #fff;
+             border: none;
+             padding: 0.55rem 1.2rem;
+             border-radius: 4px;
+             font-size: 0.88rem;
+             cursor: pointer;
+             transition: background 0.26s var(--bezier), transform 0.2s var(--bezier);
+         }
+         .btn:hover {
+             background: var(--secondary);
+         }
+         .btn:active {
+             transform: scale(0.96);
+         }
+         .post-item{
+             background: var(--card-bg);
+             border:1px solid var(--border-fade);
+             border-radius:5px;
+             padding:1.4rem 1.5rem;
+             margin-bottom:1.2rem;
+         }
+         .post-title{
+             font-size:1.1rem;
+             color:var(--primary);
+             margin-bottom:0.4rem;
+         }
+         .post-meta{
+             font-size:0.82rem;
+             color:var(--text-sub);
+             margin-bottom:0.8rem;
+         }
+         .post-content{
+             line-height:1.6;
+             white-space:pre-wrap;
+             margin-bottom:1.2rem;
+         }
+         .reply-block{
+             border-top:1px dashed var(--border-fade);
+             padding-top:1rem;
+         }
+         .reply-item{
+             padding:0.7rem 0.9rem;
+             border:1px solid var(--border-fade);
+             border-radius:4px;
+             margin-bottom:0.7rem;
+             background:rgba(120,120,120,0.04);
+         }
+         .reply-meta{
+             font-size:0.78rem;
+             color:var(--text-sub);
+             margin-bottom:0.3rem;
+         }
+         .reply-input-area{
+             margin-top:0.8rem;
+         }
+         .empty-tip{
+             padding:3rem 1rem;
+             text-align:center;
+             color:var(--text-sub);
+         }
+         .toast {
+             position: fixed;
+             bottom: 2rem;
+             left: 50%;
+             transform: translateX(-50%);
+             background: var(--primary);
+             color: #fff;
+             padding: 0.8rem 1.6rem;
+             border-radius: 4px;
+             font-size: 0.95rem;
+             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+             z-index: 999;
+             opacity: 0;
+             transition: opacity 0.3s var(--bezier);
+             pointer-events: none;
+         }
+         .toast.show { opacity: 1; pointer-events: auto; }
+         .toast.error { background: #c44b3a; }
+         @media (max-width: 640px) {
+             nav { padding: 0.8rem 2%; gap: 0.4rem; }
+             .brand { font-size: 1.15rem; }
+             nav button, nav a { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+             main { margin: 1.2rem 2% 3rem auto; padding: 0 0.5rem; }
+             .page-header { padding-left: 0.9rem; margin-bottom: 1.6rem; }
+             .page-header h2 { font-size: 1.25rem; }
+             .post-form-card,.post-item{
+                 padding:1.2rem 1rem;
+             }
+         }
+     </style>
+ </head>
+ <body>
+     <nav>
+         <div class="brand">S侦探社</div>
+         <button id="themeToggle">切换明暗</button>
+         <a href="dashboard.html">首页</a>
+         <a href="personal.html">个人中心</a>
+         <a href="forum.html" class="active">论坛</a>
+         <button id="logoutBtn">退出登录</button>
+     </nav>
+     <main>
+         <div class="page-header">
+             <h2>社团论坛</h2>
+             <p class="subtitle">社员交流讨论区</p>
+         </div>
+         <div class="post-form-card">
+             <h3>发布新帖子</h3>
+             <input id="titleInput" placeholder="帖子标题">
+             <textarea id="contentInput" placeholder="写下你的内容..."></textarea>
+             <div class="check-row">
+                 <input type="checkbox" id="anonPost">
+                 <label for="anonPost">匿名发帖</label>
+             </div>
+             <button class="btn" id="submitBtn">发布帖子</button>
+         </div>
+         <div id="postList">
+             <div class="empty-tip">正在加载帖子...</div>
+         </div>
+     </main>
+     <div id="toast" class="toast"></div>
+ <script>
+ (function initTheme() {
+     const htmlRoot = document.documentElement;
+     const themeBtn = document.getElementById('themeToggle');
+     const saved = localStorage.getItem('site-theme');
+     if (saved === 'light') htmlRoot.classList.add('light');
+     themeBtn.addEventListener('click', function() {
+         htmlRoot.classList.toggle('light');
+         localStorage.setItem('site-theme', htmlRoot.classList.contains('light') ? 'light' : 'dark');
+     });
+ })();
+ document.querySelectorAll('a').forEach(el => {
+     el.addEventListener('click', e => {
+         const targetHref = el.href;
+         e.preventDefault();
+         document.body.classList.add('page-exit');
+         setTimeout(() => location.href = targetHref, 440);
+     });
+ });
+ function showToast(msg, isError = false) {
+     const t = document.getElementById('toast');
+     t.textContent = msg;
+     t.className = 'toast' + (isError ? ' error' : '');
+     t.classList.add('show');
+     clearTimeout(t._timer);
+     t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+ }
+ const SUPABASE_URL = "https://beskfflajjthquaqbbbe.supabase.co";
+ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlc2tmZmxhamp0aHF1YXFiYmJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYyMTEsImV4cCI6MjEwMTM0MjIxMX0.ky0o3pHQZ2NSY9fh_R6HjaJk_UONUujjpleBiQRU4zM";
+ const STORAGE_KEY = 'sb-auth-token-sdetective';
+ let supabase = null;
+ let sdkReady = false;
+ const postListWrap = document.getElementById('postList');
+ function loadSupabase() {
+     return new Promise((resolve)=>{
+         const script = document.createElement('script');
+         script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+         script.onload = ()=>{
+             supabase = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+                 auth:{persistSession:true,autoRefreshToken:true,storageKey:STORAGE_KEY}
+             });
+             sdkReady=true;
+             resolve(true);
+         };
+         script.onerror = ()=>{
+             const fb=document.createElement('script');
+             fb.src="https://unpkg.com/@supabase/supabase-js@2.45.1/dist/umd/supabase.js";
+             fb.onload=()=>{
+                 supabase = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+                     auth:{persistSession:true,autoRefreshToken:true,storageKey:STORAGE_KEY}
+                 });
+                 sdkReady=true;
+                 resolve(true);
+             };
+             fb.onerror=()=>{
+                 showToast("SDK加载失败，请检查网络",true);
+                 resolve(false);
+             };
+             document.head.appendChild(fb);
+         };
+         document.head.appendChild(script);
+     })
+ }
+ function escapeHtml(s){
+     if(!s)return "";
+     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ }
+ function formatTime(isoStr){
+     if(!isoStr)return "";
+     return new Date(isoStr).toLocaleString('zh-CN');
+ }
+ async function loadPosts(){
+     if(!supabase) return;
+     postListWrap.innerHTML=`<div class="empty-tip">正在读取帖子数据...</div>`;
+     const {data:posts,error:postErr}=await supabase
+         .from("forum_posts")
+         .select(`
+             id,title,content,created_at,user_id,is_anonymous,
+             profiles!forum_posts_user_id_fkey(code_name)
+         `)
+         .order("created_at",{ascending:false});
+     if(postErr){
+         postListWrap.innerHTML=`<div class="empty-tip">读取帖子错误：${postErr.message}</div>`;
+         showToast("读取帖子失败："+postErr.message,true);
+         return;
+     }
+     if(!posts || posts.length===0){
+         postListWrap.innerHTML=`<div class="empty-tip">还没有帖子，快来发布第一条吧！</div>`;
+         return;
+     }
+     const {data:replys} = await supabase.from("forum_replys")
+     .select(`*,profiles!forum_replys_user_id_fkey(code_name)`)
+     .order("created_at",{ascending:true});
+     let html="";
+     for(let p of posts){
+         let authorName;
+         if(p.is_anonymous){
+             authorName = "匿名探员";
+         }else if(p.profiles?.code_name){
+             authorName = escapeHtml(p.profiles.code_name);
+         }else{
+             authorName = `用户ID：${escapeHtml(p.user_id)}`;
+         }
+         let replyHtml = "";
+         const curReplies = replys?.filter(r=>r.post_id === p.id) || [];
+         curReplies.forEach(r=>{
+             let replyAuthor;
+             if(r.is_anonymous){
+                 replyAuthor = "匿名探员";
+             }else if(r.profiles?.code_name){
+                 replyAuthor = escapeHtml(r.profiles.code_name);
+             }else{
+                 replyAuthor = `用户ID：${escapeHtml(r.user_id)}`;
+             }
+             replyHtml += `
+             <div class="reply-item">
+                 <div class="reply-meta">${replyAuthor} · ${formatTime(r.created_at)}</div>
+                 <div>${escapeHtml(r.content)}</div>
+             </div>`
+         })
+         html+=`
+         <div class="post-item" data-postid="${p.id}">
+             <div class="post-title">${escapeHtml(p.title)}</div>
+             <div class="post-meta">发布时间：${formatTime(p.created_at)} | ${authorName}</div>
+             <div class="post-content">${escapeHtml(p.content)}</div>
+             <div class="reply-block">
+                 <div class="reply-list">${replyHtml}</div>
+                 <div class="reply-input-area">
+                     <textarea class="reply-text" placeholder="写下回复内容..." data-post="${p.id}"></textarea>
+                     <div class="check-row">
+                         <input type="checkbox" class="anonReply" data-post="${p.id}" id="ar-${p.id}">
+                         <label for="ar-${p.id}">匿名回复</label>
+                     </div>
+                     <button class="btn send-reply" data-post="${p.id}">发送回复</button>
+                 </div>
+             </div>
+         </div>
+         `
+     }
+     postListWrap.innerHTML = html;
+     bindReplyBtn();
+ }
+ function bindReplyBtn(){
+     document.querySelectorAll('.send-reply').forEach(btn=>{
+         btn.onclick = async ()=>{
+             const pid = btn.dataset.post;
+             const textarea = document.querySelector(`.reply-text[data-post="${pid}"]`);
+             const checkBox = document.querySelector(`.anonReply[data-post="${pid}"]`);
+             const content = textarea.value.trim();
+             if(!content){
+                 showToast("回复内容不能为空",true);
+                 return;
+             }
+             const {data:{user}} = await supabase.auth.getUser();
+             if(!user){
+                 showToast("请先登录",true);
+                 return;
+             }
+             const {error} = await supabase.from('forum_replys').insert({
+                 post_id:pid,
+                 user_id:user.id,
+                 content:content,
+                 is_anonymous: checkBox.checked
+             })
+             if(error){
+                 showToast("发送失败："+error.message,true);
+             }else{
+                 textarea.value = '';
+                 showToast("回复成功");
+                 loadPosts();
+             }
+         }
+     })
+ }
+ async function submitPost(){
+     const title = document.getElementById('titleInput').value.trim();
+     const content = document.getElementById('contentInput').value.trim();
+     const anon = document.getElementById('anonPost').checked;
+     if(!title || !content){
+         showToast("标题和内容不能为空",true);
+         return;
+     }
+     const {data:{user}} = await supabase.auth.getUser();
+     if(!user){
+         showToast("请先登录",true);
+         return;
+     }
+     const {error} = await supabase.from('forum_posts').insert({
+         title,content,user_id:user.id,is_anonymous:anon
+     })
+     if(error){
+         showToast("发帖失败："+error.message,true);
+     }else{
+         document.getElementById('titleInput').value='';
+         document.getElementById('contentInput').value='';
+         showToast("发帖成功");
+         loadPosts();
+     }
+ }
+ document.getElementById('submitBtn').onclick = submitPost;
+ document.getElementById('logoutBtn').onclick = async ()=>{
+     await supabase.auth.signOut();
+     location.href="login.html";
+ }
+ (async function boot(){
+     await loadSupabase();
+     const {data:{session}} = await supabase.auth.getSession();
+     if(!session){
+         location.replace("login.html");
+         return;
+     }
+     loadPosts();
+ })();
+ </script>
+ </body>
+ </html>
